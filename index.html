@@ -5,23 +5,111 @@
 	<title>Visualizing Sorting Algorithms</title>
 	
 	<script type="text/javascript">
+
+	var gCollection = new myCollection(24);
+	var gGraphics = null;
 	
 	window.addEventListener("load", eventWindowLoaded, false);
 
 	function eventWindowLoaded () {
-		alert("Visualizing algorithms");
+		visualizeAlgorithms();
+	}
+
+	function visualizeAlgorithms() {
+
+		var mCanvas = document.getElementById('canvas');
+
+		if (!canvasSupport(mCanvas)) {
+			alert("Cannot run graphics because this browser does not support the HTML5 Canvas");
+			return;
+		}
+	
+		function canvasSupport(canvas) {
+			if (!canvas || !canvas.getContext) return false;
+			return true;
+		}
+
+		// create array to be sorted
+		gCollection.create();
+
+		// set click event for sort button
+		document.getElementById('selectionSort').addEventListener("click", function() {
+			gCollection.selectionSort();
+		});
+		
+		// create a graphics object for the canvas
+		gGraphics = new myGraphics(mCanvas);
+		gGraphics.drawScreen();
+	}
+
+	// wrap an array as an object with custom sort methods
+	function myCollection(length) {
+		this.elements = new Array();
+		this.length = length;
+
+		this.create = function() {
+			for (var i = 0; i < this.length; i++) {
+				var value = Math.floor(Math.random() * this.length) + 1;
+				this.elements.push(value);
+			}	
+		}
+
+		this.selectionSort = function() {
+			// TODO
+			document.getElementById('message').innerHTML = 'Running selection sort';
+		}
+
+		return this;
+	}
+
+	function myGraphics(canvas) {
+		this.canvas = canvas;
+		this.context = canvas.getContext('2d');
+		this.startX = 5;
+		this.startY = 50;
+		this.maxHeight = 45;
+		this.wd = 5;
+
+		this.drawScreen = function() {
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+			// draw baseline
+			this.context.beginPath();
+			this.context.strokeStyle = 'black';
+			this.context.lineWidth = 1;
+			this.context.moveTo(this.startX,this.startY);
+			this.context.lineTo(this.canvas.width - this.startX, this.startY);
+			this.context.stroke();
+			this.context.closePath();
+
+			// draw bars
+			this.context.beginPath();
+			this.context.fillStyle = 'blue';
+			var x = this.startX, ht;
+			for (var i = 0; i < gCollection.length; i++) {
+				ht = this.maxHeight * (gCollection.elements[i] / gCollection.length);
+				this.context.rect(x, this.startY - ht, this.wd, ht);
+				x += (this.wd * 2);
+			}
+			this.context.stroke();
+			this.context.fill();
+			this.context.closePath();
+		}
+
+		return this;
 	}
 
 	</script>
 </head>
 <body>
 	<div style="position:absolute;top:25px;left:25px;border:solid 1px black;">
-		<canvas id="canvas" width="250px" height="60" >
+		<canvas id="canvas" width="250px" height="100" >
 	Your browser does not support HTML5 Canvas
 		</canvas>
 	</div>
-	<div style="position:absolute;top:100px;left:25px;width:250px;">
-	You are here.
+	<div style="position:absolute;top:140px;left:25px;width:250px;">
+		<button id='selectionSort'>Selection Sort</button>
+		<div id='message'></div>
 	</div>
 </body>
 </html>
