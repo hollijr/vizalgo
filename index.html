@@ -32,9 +32,17 @@
 		// create array to be sorted
 		gCollection.create();
 
-		// set click event for sort button
+		// set click event for sort, reset and new buttons
 		document.getElementById('selectionSort').addEventListener("click", function() {
 			gCollection.selectionSort();
+		});
+		document.getElementById('resetOrder').addEventListener("click", function() {
+			gCollection.reset();
+			gGraphics.drawScreen();
+		});
+		document.getElementById('newValues').addEventListener("click", function() {
+			gCollection.create();
+			gGraphics.drawScreen();
 		});
 		
 		// create a graphics object for the canvas
@@ -44,19 +52,58 @@
 
 	// wrap an array as an object with custom sort methods
 	function myCollection(length) {
+		// original order of values for resetting between different sorts
+		this.original = new Array();
+
+		// working copy for sorting
 		this.elements = new Array();
+
+		// number of elements to store in array
 		this.length = length;
 
+		// used to populate the array with a new set of random integers
 		this.create = function() {
+			this.original.length = 0;
+			this.elements.length = 0;
 			for (var i = 0; i < this.length; i++) {
 				var value = Math.floor(Math.random() * this.length) + 1;
+				this.original.push(value);
 				this.elements.push(value);
 			}	
 		}
 
+		this.reset = function() {
+			this.elements.length = 0; 
+
+			// assumes this.original's length has not changed from this.length
+			for (var i = 0; i < this.length; i++) {
+				this.elements.push(this.original[i]);
+			}
+		}
+
 		this.selectionSort = function() {
-			// TODO
+			document.getElementById('description').innerHTML = "<p>A simple, in-place comparison sort with O(n^2) complexity.  Generally performs worse than insertion sort.</p><p>The algorithm divides the input list into two parts: the sublist of items already sorted, which is built up from left to right at the front (left) of the list, and the sublist of items remaining to be sorted that occupy the rest of the list. Initially, the sorted sublist is empty and the unsorted sublist is the entire input list. The algorithm proceeds by finding the smallest (or largest, depending on sorting order) element in the unsorted sublist, exchanging it with the leftmost unsorted element (putting it in sorted order), and moving the sublist boundaries one element to the right.</p>";
 			document.getElementById('message').innerHTML = 'Running selection sort';
+
+			for (var i = 0; i < this.length; i++) {
+				var min = i;
+				for (var j = i; j < this.length; j++) {
+					if (this.elements[j] < this.elements[min]) {
+						min = j;
+						gGraphics.drawScreen(min);
+					}
+				}
+				if (i !== min) {
+					gGraphics.swapElements(i, min);
+					var temp = this.elements[i];
+					this.elements[i] = this.elements[min];
+					this.elements[min] = temp;
+					gGraphics.drawScreen(min);
+				}
+			}
+			
+			document.getElementById('message').innerHTML = 'Finished';
+
 		}
 
 		return this;
@@ -66,16 +113,20 @@
 		this.canvas = canvas;
 		this.context = canvas.getContext('2d');
 		this.startX = 5;
-		this.startY = 50;
-		this.maxHeight = 45;
-		this.wd = 5;
+		this.startY = 100;
+		this.maxHeight = 60;
+		this.wd = 6;
+		this.labelFnt = "7pt Arial";
+		this.colColor = 'blue';
+		this.lineColor = "black";
+		this.fontColor = "black";
 
-		this.drawScreen = function() {
+		this.drawScreen = function(min) {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 			// draw baseline
 			this.context.beginPath();
-			this.context.strokeStyle = 'black';
+			this.context.strokeStyle = this.lineColor;
 			this.context.lineWidth = 1;
 			this.context.moveTo(this.startX,this.startY);
 			this.context.lineTo(this.canvas.width - this.startX, this.startY);
@@ -84,8 +135,42 @@
 
 			// draw bars
 			this.context.beginPath();
-			this.context.fillStyle = 'blue';
-			var x = this.startX, ht;
+			var x = this.startX + this.wd/2, ht;
+			for (var i = 0; i < gCollection.length; i++) {
+				if (i == min) this.context.fillStyle = "red";
+				else this.context.fillStyle = this.colColor;
+				ht = this.maxHeight * (gCollection.elements[i] / gCollection.length);
+				this.context.rect(x, this.startY - ht, this.wd, ht);
+				x += (this.wd * 2);
+			}
+			this.context.stroke();
+			this.context.fill();
+			this.context.closePath();
+			x = this.startX + this.wd/2;
+			this.context.font = this.fontColor;
+			for (var i = 0; i < gCollection.length; i++) {
+				if (i == min) this.context.font = "red";
+				this.labelStep(270, gCollection.elements[i].toString(), x, this.startY + 12);
+				x += (this.wd * 2);
+			}
+		}
+
+		this.drawScreen = function() {
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+			// draw baseline
+			this.context.beginPath();
+			this.context.strokeStyle = this.lineColor;
+			this.context.lineWidth = 1;
+			this.context.moveTo(this.startX,this.startY);
+			this.context.lineTo(this.canvas.width - this.startX, this.startY);
+			this.context.stroke();
+			this.context.closePath();
+
+			// draw bars
+			this.context.beginPath();
+			var x = this.startX + this.wd/2, ht;
+			this.context.fillStyle = this.colColor;
 			for (var i = 0; i < gCollection.length; i++) {
 				ht = this.maxHeight * (gCollection.elements[i] / gCollection.length);
 				this.context.rect(x, this.startY - ht, this.wd, ht);
@@ -94,22 +179,95 @@
 			this.context.stroke();
 			this.context.fill();
 			this.context.closePath();
+			x = this.startX + this.wd/2;
+			this.context.font = this.fontColor;
+			for (var i = 0; i < gCollection.length; i++) {
+				this.labelStep(270, gCollection.elements[i].toString(), x, this.startY + 12);
+				x += (this.wd * 2);
+			}
+		}
+
+		this.labelStep = function(angle, lbl, cX, cY) {
+			this.context.setTransform(1,0,0,1,0,0);
+			this.context.translate(cX, cY);
+			this.context.rotate(angle + (Math.PI / 2));
+			this.context.textAlign = "center";
+			this.context.translate(0, 0);
+			this.context.fillText(lbl, 0, 0);
+			this.context.rotate(0);
+			this.context.setTransform(1,0,0,1,0,0);
+		}
+
+		this.swapElements = function(openSpot, min) {
+
 		}
 
 		return this;
 	}
 
 	</script>
+	<style>
+	body {
+		width: 300px;
+		margin: 0 auto;
+	}
+	#canvas {
+		position: absolute;
+		top: 25px;
+		left: 25px;
+		border: solid 1px black;
+		padding: 0px;
+		margin: 0px;
+		width: 250px;
+		height: 100px;
+		background-color: yellow;
+	}
+	.controls {
+		width: 250px;
+		position: absolute;
+		margin-top: 140px;
+		left: 25px;
+		border: none;
+	}
+	button {
+		border-radius: 10px;
+		line-height: 2;
+		text-align: center;
+		width: 100px;
+		display: inline;
+		font-family: sans-serif;
+		font-size: 12px;
+	}
+	fieldset {
+		display: block;
+		margin-bottom: 10px;
+	}
+	.sorts legend {
+		text-align: center;
+	}
+	#message {
+		display: block;
+	}
+	#description {
+		font-size: .75em;
+	}
+
+	</style>
 </head>
 <body>
-	<div style="position:absolute;top:25px;left:25px;border:solid 1px black;">
-		<canvas id="canvas" width="250px" height="100" >
-	Your browser does not support HTML5 Canvas
-		</canvas>
-	</div>
-	<div style="position:absolute;top:140px;left:25px;width:250px;">
-		<button id='selectionSort'>Selection Sort</button>
+	<canvas id="canvas">Your browser does not support HTML5 Canvas</canvas>
+	<div class="controls">
+		<fieldset class="general">
+			<button id='newValues'>New Values</button> 
+			<button id='resetOrder'>Reset Order</button>
+		</fieldset>
+		<fieldset class="sorts">
+			<legend>Types of Sorts</legend>
+			<button id='selectionSort'>Selection Sort</button>
+		</fieldset>
 		<div id='message'></div>
+		<section id="description"></section>
+		
 	</div>
 </body>
 </html>
