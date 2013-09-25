@@ -6,7 +6,7 @@
 	
 	<script type="text/javascript">
 
-	var gCollection = new myCollection(24);
+	var gItemArray = new ItemArray(24);
 	var gGraphics = null;
 	
 	window.addEventListener("load", eventWindowLoaded, false);
@@ -29,29 +29,30 @@
 			return true;
 		}
 
+		// create a graphics object for the canvas
+		gGraphics = new GraphicsControl(mCanvas);
+
 		// create array to be sorted
-		gCollection.create();
+		gItemArray.create();
 
 		// set click event for sort, reset and new buttons
 		document.getElementById('selectionSort').addEventListener("click", function() {
-			gCollection.selectionSort();
+			gItemArray.selectionSort();
 		});
 		document.getElementById('resetOrder').addEventListener("click", function() {
-			gCollection.reset();
+			gItemArray.reset();
 			gGraphics.drawScreen();
 		});
 		document.getElementById('newValues').addEventListener("click", function() {
-			gCollection.create();
+			gItemArray.create();
 			gGraphics.drawScreen();
 		});
 		
-		// create a graphics object for the canvas
-		gGraphics = new myGraphics(mCanvas);
 		gGraphics.drawScreen();
 	}
 
 	// wrap an array as an object with custom sort methods
-	function myCollection(length) {
+	function ItemArray(length) {
 		// original order of values for resetting between different sorts
 		this.original = new Array();
 
@@ -109,7 +110,7 @@
 		return this;
 	}
 
-	function myGraphics(canvas) {
+	function GraphicsControl(canvas) {
 		this.canvas = canvas;
 		this.context = canvas.getContext('2d');
 		this.startX = 5;
@@ -117,43 +118,10 @@
 		this.maxHeight = 60;
 		this.wd = 6;
 		this.labelFnt = "7pt Arial";
-		this.colColor = 'blue';
 		this.lineColor = "black";
-		this.fontColor = "black";
-
-		this.drawScreen = function(min) {
-			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-			// draw baseline
-			this.context.beginPath();
-			this.context.strokeStyle = this.lineColor;
-			this.context.lineWidth = 1;
-			this.context.moveTo(this.startX,this.startY);
-			this.context.lineTo(this.canvas.width - this.startX, this.startY);
-			this.context.stroke();
-			this.context.closePath();
-
-			// draw bars
-			this.context.beginPath();
-			var x = this.startX + this.wd/2, ht;
-			for (var i = 0; i < gCollection.length; i++) {
-				if (i == min) this.context.fillStyle = "red";
-				else this.context.fillStyle = this.colColor;
-				ht = this.maxHeight * (gCollection.elements[i] / gCollection.length);
-				this.context.rect(x, this.startY - ht, this.wd, ht);
-				x += (this.wd * 2);
-			}
-			this.context.stroke();
-			this.context.fill();
-			this.context.closePath();
-			x = this.startX + this.wd/2;
-			this.context.font = this.fontColor;
-			for (var i = 0; i < gCollection.length; i++) {
-				if (i == min) this.context.font = "red";
-				this.labelStep(270, gCollection.elements[i].toString(), x, this.startY + 12);
-				x += (this.wd * 2);
-			}
-		}
+		this.stdColor = "blue";
+		this.highlightColor = "red";
+		this.minColor = "green";
 
 		this.drawScreen = function() {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -167,33 +135,39 @@
 			this.context.stroke();
 			this.context.closePath();
 
-			// draw bars
-			this.context.beginPath();
-			var x = this.startX + this.wd/2, ht;
-			this.context.fillStyle = this.colColor;
-			for (var i = 0; i < gCollection.length; i++) {
-				ht = this.maxHeight * (gCollection.elements[i] / gCollection.length);
-				this.context.rect(x, this.startY - ht, this.wd, ht);
-				x += (this.wd * 2);
-			}
-			this.context.stroke();
-			this.context.fill();
-			this.context.closePath();
-			x = this.startX + this.wd/2;
-			this.context.font = this.fontColor;
-			for (var i = 0; i < gCollection.length; i++) {
-				this.labelStep(270, gCollection.elements[i].toString(), x, this.startY + 12);
-				x += (this.wd * 2);
+			// draw bars & labels
+			for (var i = 0; i < gItemArray.length; i++) {
+				this.drawItem(i, this.stdColor);
 			}
 		}
 
-		this.labelStep = function(angle, lbl, cX, cY) {
+		this.drawItem = function(i, color) {
+			this.drawBar(i, color);
+			this.drawLabel(i, color)
+		}
+
+		this.drawBar = function(i, color) {
+			var ht = this.maxHeight * (gItemArray.elements[i] / gItemArray.length);
+			var x = this.startX + this.wd/2 + (this.wd * 2 * i);
+			this.context.clearRect(x, 0, this.wd, this.startY);
+			this.context.beginPath();
+			this.context.fillStyle = color;
+			this.context.rect(x, this.startY - ht, this.wd, ht);
+			this.context.stroke();
+			this.context.fill();
+			this.context.closePath();
+		}
+
+		this.drawLabel = function(i, color) {
+			var x = this.startX + this.wd/4 + (this.wd * 2 * i);
+			this.context.clearRect(x, this.startY + 1, this.wd, this.startY);
+			this.context.font = color;
 			this.context.setTransform(1,0,0,1,0,0);
-			this.context.translate(cX, cY);
-			this.context.rotate(angle + (Math.PI / 2));
+			this.context.translate(x, this.startY + 12);
+			this.context.rotate(270 + (Math.PI / 2));
 			this.context.textAlign = "center";
 			this.context.translate(0, 0);
-			this.context.fillText(lbl, 0, 0);
+			this.context.fillText(gItemArray.elements[i].toString(), 0, 0);
 			this.context.rotate(0);
 			this.context.setTransform(1,0,0,1,0,0);
 		}
