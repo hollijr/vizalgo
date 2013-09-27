@@ -8,6 +8,7 @@
 
 	var gItemArray = new ItemArray(24);
 	var gGraphics = null;
+	var timer = null;
 	
 	window.addEventListener("load", eventWindowLoaded, false);
 
@@ -85,43 +86,62 @@
 		this.selectionSort = function() {
 			document.getElementById('description').innerHTML = "<p>A simple, in-place comparison sort with O(n^2) complexity.  Generally performs worse than insertion sort.</p><p>The algorithm divides the input list into two parts: the sublist of items already sorted, which is built up from left to right at the front (left) of the list, and the sublist of items remaining to be sorted that occupy the rest of the list. Initially, the sorted sublist is empty and the unsorted sublist is the entire input list. The algorithm proceeds by finding the smallest (or largest, depending on sorting order) element in the unsorted sublist, exchanging it with the leftmost unsorted element (putting it in sorted order), and moving the sublist boundaries one element to the right.</p>";
 			document.getElementById('message').innerHTML = 'Running selection sort';
-
-			for (var i = 0; i < this.length; i++) {
-				var min = i;
-				for (var j = i; j < this.length; j++) {
-					if (this.elements[j] < this.elements[min]) {
-						min = j;
-						gGraphics.drawScreen(min);
-					}
-				}
-				if (i !== min) {
-					gGraphics.swapElements(i, min);
-					var temp = this.elements[i];
-					this.elements[i] = this.elements[min];
-					this.elements[min] = temp;
-					gGraphics.drawScreen(min);
-				}
-			}
 			
-			document.getElementById('message').innerHTML = 'Finished';
-
+			selSortOuter(-1);			
 		}
 
 		return this;
+	}
+
+	function selSortOuter(i) {
+		gGraphics.drawScreen();
+		i++;
+		if (i < gItemArray.length) {
+			gGraphics.markOpenSpot(i);  // TODO 
+			timer = setTimeout(function() {selSortInner(i, i, i);}, 100);
+		}
+		else {
+			document.getElementById('message').innerHTML = 'Finished';
+			gGraphics.drawScreen();
+		}
+	}
+
+	function selSortInner(i, j, min) {
+		if (j > 0 && j != min) gGraphics.drawStandard(j);
+		j++;
+		if (j < gItemArray.length) {
+			gGraphics.showNextCompare(j);
+			if (gItemArray.elements[j] < gItemArray.elements[min]) {
+				if (min != i) gGraphics.drawStandard(min);
+				min = j;
+				gGraphics.highlightMin(min);
+			}
+			timer = setTimeout(function() {selSortInner(i, j, min);}, 100);
+		}
+		else {
+			if (i !== min) {
+				gGraphics.swapElements(i, min);  // TODO
+				var temp = gItemArray.elements[i];
+				gItemArray.elements[i] = gItemArray.elements[min];
+				gItemArray.elements[min] = temp;
+			}
+			selSortOuter(i);
+		}
 	}
 
 	function GraphicsControl(canvas) {
 		this.canvas = canvas;
 		this.context = canvas.getContext('2d');
 		this.startX = 5;
-		this.startY = 100;
+		this.startY = 130;
 		this.maxHeight = 60;
 		this.wd = 6;
 		this.labelFnt = "7pt Arial";
 		this.lineColor = "black";
 		this.stdColor = "blue";
 		this.highlightColor = "red";
-		this.minColor = "green";
+		this.minColor = "#33ff66";
+		this.compareColor = "#33ccff";
 
 		this.drawScreen = function() {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -172,8 +192,24 @@
 			this.context.setTransform(1,0,0,1,0,0);
 		}
 
+		this.markOpenSpot = function(i) {
+			this.drawItem(i, this.highlightColor);
+		}
+
 		this.swapElements = function(openSpot, min) {
 
+		}
+
+		this.highlightMin = function(min) {
+			this.drawItem(min, this.minColor);
+		}
+
+		this.drawStandard = function(i) {
+			this.drawItem(i, this.stdColor);
+		}
+
+		this.showNextCompare = function(i) {
+			this.drawItem(i, this.compareColor);
 		}
 
 		return this;
