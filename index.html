@@ -85,7 +85,7 @@
 
 		this.selectionSort = function() {
 			document.getElementById('description').innerHTML = "<p>A simple, in-place comparison sort with O(n^2) complexity.  Generally performs worse than insertion sort.</p><p>The algorithm divides the input list into two parts: the sublist of items already sorted, which is built up from left to right at the front (left) of the list, and the sublist of items remaining to be sorted that occupy the rest of the list. Initially, the sorted sublist is empty and the unsorted sublist is the entire input list. The algorithm proceeds by finding the smallest (or largest, depending on sorting order) element in the unsorted sublist, exchanging it with the leftmost unsorted element (putting it in sorted order), and moving the sublist boundaries one element to the right.</p>";
-			document.getElementById('message').innerHTML = 'Running selection sort';
+			document.getElementById('message').innerHTML = 'Running selection sort...';
 			
 			selSortOuter(-1);			
 		}
@@ -94,29 +94,35 @@
 	}
 
 	function selSortOuter(i) {
-		gGraphics.drawScreen();
 		i++;
+		gGraphics.drawSelectionSort(i);
 		if (i < gItemArray.length) {
-			gGraphics.markOpenSpot(i);  // TODO 
-			timer = setTimeout(function() {selSortInner(i, i, i);}, 100);
+			gGraphics.markSwapBase(i);
+			timer = setTimeout(function() {selSortInner(i, i, i);}, 200);
 		}
 		else {
 			document.getElementById('message').innerHTML = 'Finished';
-			gGraphics.drawScreen();
+			gGraphics.drawSelectionSort(i);
 		}
 	}
 
 	function selSortInner(i, j, min) {
+		// change previous 'compare' highlight back to standard
 		if (j > 0 && j != min) gGraphics.drawStandard(j);
+
+		// highlight current min
+		gGraphics.highlightMin(min);
+
+		// continue comparisons against current min
 		j++;
 		if (j < gItemArray.length) {
 			gGraphics.showNextCompare(j);
 			if (gItemArray.elements[j] < gItemArray.elements[min]) {
-				if (min != i) gGraphics.drawStandard(min);
+				gGraphics.drawStandard(min);
 				min = j;
 				gGraphics.highlightMin(min);
 			}
-			timer = setTimeout(function() {selSortInner(i, j, min);}, 100);
+			timer = setTimeout(function() {selSortInner(i, j, min);}, 200);
 		}
 		else {
 			if (i !== min) {
@@ -135,25 +141,20 @@
 		this.startX = 5;
 		this.startY = 130;
 		this.maxHeight = 60;
-		this.wd = 6;
+		this.barWd = 6;
 		this.labelFnt = "7pt Arial";
 		this.lineColor = "black";
 		this.stdColor = "blue";
-		this.highlightColor = "red";
+		this.sortedColor = "red";
 		this.minColor = "#33ff66";
 		this.compareColor = "#33ccff";
+		this.arrowWd = 6;
+		this.arrowHt = 12;
+		this.arrowY = 6;
 
 		this.drawScreen = function() {
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-			// draw baseline
-			this.context.beginPath();
-			this.context.strokeStyle = this.lineColor;
-			this.context.lineWidth = 1;
-			this.context.moveTo(this.startX,this.startY);
-			this.context.lineTo(this.canvas.width - this.startX, this.startY);
-			this.context.stroke();
-			this.context.closePath();
+			this.drawBaseline();
 
 			// draw bars & labels
 			for (var i = 0; i < gItemArray.length; i++) {
@@ -161,26 +162,51 @@
 			}
 		}
 
+		this.drawBaseline = function() {
+			this.context.beginPath();
+			this.context.strokeStyle = this.lineColor;
+			this.context.lineWidth = 1;
+			this.context.moveTo(this.startX,this.startY);
+			this.context.lineTo(this.canvas.width - this.startX, this.startY);
+			this.context.stroke();
+			this.context.closePath();
+		}
+
+		this.drawSelectionSort = function(switchPt) {
+			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+			this.drawBaseline();
+
+			for (var k = 0; k < gItemArray.length; k++) {
+				var color = this.stdColor;
+				if (k < switchPt) color = this.sortedColor;
+				this.drawItem(k, color);
+			}
+		}
+
 		this.drawItem = function(i, color) {
 			this.drawBar(i, color);
-			this.drawLabel(i, color)
+			this.drawLabel(i, color);
+		}
+
+		this.calculateX = function(i) {
+			return this.startX + this.barWd/2 + (this.barWd * 2 * i);
 		}
 
 		this.drawBar = function(i, color) {
 			var ht = this.maxHeight * (gItemArray.elements[i] / gItemArray.length);
-			var x = this.startX + this.wd/2 + (this.wd * 2 * i);
-			this.context.clearRect(x, 0, this.wd, this.startY);
+			var x = this.startX + this.barWd/2 + (this.barWd * 2 * i);
+			this.context.clearRect(x, this.arrowHt + this.arrowY, this.barWd, this.startY);
 			this.context.beginPath();
 			this.context.fillStyle = color;
-			this.context.rect(x, this.startY - ht, this.wd, ht);
+			this.context.rect(x, this.startY - ht, this.barWd, ht);
 			this.context.stroke();
 			this.context.fill();
 			this.context.closePath();
 		}
 
 		this.drawLabel = function(i, color) {
-			var x = this.startX + this.wd/4 + (this.wd * 2 * i);
-			this.context.clearRect(x, this.startY + 1, this.wd, this.startY);
+			var x = this.startX + this.barWd/4 + (this.barWd * 2 * i);
+			this.context.clearRect(x, this.startY + 1, this.barWd, this.startY);
 			this.context.font = color;
 			this.context.setTransform(1,0,0,1,0,0);
 			this.context.translate(x, this.startY + 12);
@@ -192,8 +218,17 @@
 			this.context.setTransform(1,0,0,1,0,0);
 		}
 
-		this.markOpenSpot = function(i) {
-			this.drawItem(i, this.highlightColor);
+		this.markSwapBase = function(i) {
+			var x = this.calculateX(i);
+			this.drawDownArrow(x, this.arrowY, "black");
+		}
+
+		this.clearSwapMarks = function() {
+			this.context.clearRect(0, 0, this.canvas.width, this.arrowHt);
+		}
+
+		this.drawSortedItem = function(i) {
+			this.drawItem(i, this.sortedColor);
 		}
 
 		this.swapElements = function(openSpot, min) {
@@ -210,6 +245,26 @@
 
 		this.showNextCompare = function(i) {
 			this.drawItem(i, this.compareColor);
+		}
+
+		this.drawDownArrow = function(x,y,color) {
+			var third = this.arrowWd / 3;
+			this.context.beginPath();
+			this.context.fillStyle = color;
+			this.context.strokeStyle = color;
+			this.context.translate(x, y);
+			this.context.moveTo(third, 0);
+			this.context.lineTo(third * 2, 0);
+			this.context.lineTo(third * 2, this.arrowHt - this.arrowWd);
+			this.context.lineTo(this.arrowWd, this.arrowHt - this.arrowWd);
+			this.context.lineTo(this.arrowWd/2, this.arrowHt);
+			this.context.lineTo(0, this.arrowHt - this.arrowWd);
+			this.context.lineTo(third, this.arrowHt - this.arrowWd);
+			this.context.lineTo(third, 0);
+			this.context.fill();
+			this.context.stroke();
+			this.context.translate(-x, -y);
+			this.context.closePath();
 		}
 
 		return this;
@@ -230,12 +285,51 @@
 		margin: 0px;
 		width: 250px;
 		height: 100px;
-		background-color: yellow;
+		background-color: #ffff99;
+	}
+	div#legend {
+		margin-top: 130px;
+		left: 25px;
+		position: absolute;
+		display: block;
+		width: 100%;
+		height: 15px;
+		font-size: 0.6em;
+	}
+	div#legend div {
+		display: inline;
+	}
+	.box {
+		border: solid 1px black;
+		width: 10px;
+		height: 10px;
+		float: left;
+	}
+	#openSpot {
+		clear: both;
+		display: block;
+		left: 25;
+		text-align: left;
+		line-height: 2;
+	}
+	#sorted {
+		background-color: red;
+	}
+	#currMin {
+		background-color: #33ff66;
+	}
+	#currCompare {
+		background-color: #33ccff;
+	}
+	.text {
+		width: 70px;
+		float: left;
+		padding-left: 5px;
 	}
 	.controls {
 		width: 250px;
 		position: absolute;
-		margin-top: 140px;
+		margin-top: 170px;
 		left: 25px;
 		border: none;
 	}
@@ -257,15 +351,21 @@
 	}
 	#message {
 		display: block;
+		background-color: #ffff99;
 	}
 	#description {
 		font-size: .75em;
 	}
-
 	</style>
 </head>
-<body>
+<body>	
 	<canvas id="canvas">Your browser does not support HTML5 Canvas</canvas>
+	<div id="legend">
+		<div id="sorted" class="box"></div><div class="text">Sorted</div>
+		<div id="currMin" class="box"></div><div class="text">Current Min</div>
+		<div id="currCompare" class="box"></div><div class="text">Next Compare</div>
+		<p id="openSpot">(The black arrow indicates where the next sorted value goes)</p>
+	</div>
 	<div class="controls">
 		<fieldset class="general">
 			<button id='newValues'>New Values</button> 
@@ -274,10 +374,12 @@
 		<fieldset class="sorts">
 			<legend>Types of Sorts</legend>
 			<button id='selectionSort'>Selection Sort</button>
+			<button id='bubbleSort'>Bubble Sort</button>
+			<button id='insertionSort'>Insertion Sort</button>
+			<button id='selectionSort'>Selection Sort</button>
 		</fieldset>
 		<div id='message'></div>
 		<section id="description"></section>
-		
 	</div>
 </body>
 </html>
