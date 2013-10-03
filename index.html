@@ -139,7 +139,7 @@
 			document.getElementById('message').innerHTML = 'Running selection sort...';
 			document.getElementById('info').style.display = "block";
 			
-			selSortOuter(-1);			
+			selSortOuter(-1, 0, gItemArray.length);			
 		}
 
 		this.bubbleSort = function() {
@@ -149,7 +149,7 @@
 			document.getElementById('message').innerHTML = 'Running bubble sort...';
 			document.getElementById('info').style.display = "block";
 			
-			bubbleSortOuter(-1, true);			
+			bubbleSortOuter(-1, true, 0, gItemArray.length);			
 		}
 
 		this.insertionSort = function() {
@@ -159,7 +159,7 @@
 			document.getElementById('message').innerHTML = 'Insertion sort has not been implemented yet.';
 			document.getElementById('info').style.display = "block";
 			
-			insertionSortOuter(-1);
+			insertionSortOuter(-1, 0, gItemArray.length);
 		}
 
 		this.quickSort = function() {
@@ -195,21 +195,29 @@
 		return this;
 	}
 
-	/* Selection Sort */
-	function selSortOuter(i) {
+	/* Note:  Use setTimeout functions (instead of 'sleep') to delay start of next step in sort process in order to allow 
+	   user to see the change on screen.  After setTimeout is called, processing on current thread continues, which keeps
+	   the interface from getting tied up waiting for the timer call to execute.  This allows the application to 
+	   capture and respond to the user pressing other buttons on the screen in the middle of a sort processing.  To
+	   make it work, no further statements are included in the current function path after a 'setTimeout' call.  */
+
+	/*************************************** Selection Sort ***********************************/
+	/* Selection Sort (original nested loop function was refactored into separate 'outer' and 'inner' functions 
+		called using setTimeout) */
+	function selSortOuter(i, start, end) {
 		i++;
-		gGraphics.drawInPlaceSort(0, i, gGraphics.sortedColor, gGraphics.stdColor);
-		if (i < gItemArray.length) {
+		gGraphics.drawInPlaceSort(0, start, end, i, gGraphics.sortedColor, gGraphics.stdColor);
+		if (i < end) {
 			gGraphics.markSwapBase(0, i);
-			timer = setTimeout(function() {selSortInner(i, i, i);}, compareSpeed[speed]);
+			timer = setTimeout(function() {selSortInner(i, i, i, start, end);}, compareSpeed[speed]);
 		}
 		else {
 			document.getElementById('message').innerHTML = 'Selection sort finished.';
-			gGraphics.drawInPlaceSort(0, i, gGraphics.sortedColor, gGraphics.stdColor);
+			gGraphics.drawInPlaceSort(0, start, end, i, gGraphics.sortedColor, gGraphics.stdColor);
 		}
 	}
 
-	function selSortInner(i, j, min) {
+	function selSortInner(i, j, min, start, end) {
 		// change previous 'compare' highlight back to standard
 		if (j > 0 && j != min) gGraphics.drawStandard(0, j);
 
@@ -218,28 +226,31 @@
 
 		// continue comparisons against current min
 		j++;
-		if (j < gItemArray.length) {
+		if (j < end) {
 			gGraphics.showNextCompare(0, j);
 			if (gItemArray.elements[j] < gItemArray.elements[min]) {
 				gGraphics.drawStandard(0, min);
 				min = j;
 				gGraphics.highlightMin(0, min);
 			}
-			timer = setTimeout(function() {selSortInner(i, j, min);}, compareSpeed[speed]);
+			timer = setTimeout(function() {selSortInner(i, j, min, start, end);}, compareSpeed[speed]);
 		}
 		else {
 			if (i !== min) {
 				swapValues(i, min);
 				// pass the function that should be called after the swap animation is complete
-				var funct = function() {selSortOuter(i);}
+				var funct = function() {selSortOuter(i, start, end);}
 				gGraphics.swapElements(0, 1, i, min, funct);
 			} else {
-				selSortOuter(i);
+				selSortOuter(i, start, end);
 			}
 		}
 	}
 
-	/* Bubble Sort */
+	/**************************** End Selection Sort *****************************************/
+
+	/*************************************** Bubble Sort ***********************************/
+	/* Bubble Sort -- refactor using setTimeouts to allow for animation to be viewed */
 	/*function bubbleSortOuter() {
 		var swap = false;
 		for (var i = 0; i < gItemArray.length; i++) {
@@ -255,21 +266,21 @@
 	}*/
 
 	/* Bubble Sort */
-	function bubbleSortOuter(i, swap) {
+	function bubbleSortOuter(i, swap, start, end) {
 		i++;
-		gGraphics.drawInPlaceSort(0, gItemArray.length - i, gGraphics.stdColor, gGraphics.sortedColor);
-		if (swap && i < gItemArray.length) {
-			timer = setTimeout(function() {bubbleSortInner(i, -1, false);}, compareSpeed[speed]);
+		gGraphics.drawInPlaceSort(0, start, end, end - i, gGraphics.stdColor, gGraphics.sortedColor);
+		if (swap && i < end) {
+			timer = setTimeout(function() {bubbleSortInner(i, -1, false, start, end);}, compareSpeed[speed]);
 		} else {
 			document.getElementById('message').innerHTML = 'Bubble sort finished.';
-			gGraphics.drawInPlaceSort(0, -1, gGraphics.stdColor, gGraphics.sortedColor);
+			gGraphics.drawInPlaceSort(0, start, end, -1, gGraphics.stdColor, gGraphics.sortedColor);
 		}
 	}
 
-	function bubbleSortInner(i, j, swap) {
+	function bubbleSortInner(i, j, swap, start, end) {
 		j++;
-		gGraphics.drawInPlaceSort(0, gItemArray.length - i, gGraphics.stdColor, gGraphics.sortedColor);
-		if (j < gItemArray.length - i - 1) {
+		gGraphics.drawInPlaceSort(0, start, end, end - i, gGraphics.stdColor, gGraphics.sortedColor);
+		if (j < end - i - 1) {
 			gGraphics.markSwapBase(0, j);
 			gGraphics.markSwapBase(0, j+1);
 			gGraphics.showNextCompare(0, j);
@@ -279,17 +290,20 @@
 				swapValues(j, j+1);
 				swap = true;
 				// pass the function that should be called after the swap animation is complete
-				gGraphics.swapElements(0, 1, j, j+1, function() {bubbleSortInner(i, j, true);});
+				gGraphics.swapElements(0, 1, j, j+1, function() {bubbleSortInner(i, j, true, start, end);});
 			} else {
 				gGraphics.highlightMin(0, j);
-				timer = setTimeout(function() {bubbleSortInner(i, j, swap);}, compareSpeed[speed]);
+				timer = setTimeout(function() {bubbleSortInner(i, j, swap, start, end);}, compareSpeed[speed]);
 			}
 		} else {
-			bubbleSortOuter(i, swap);
+			bubbleSortOuter(i, swap, start, end);
 		}
 	}
 
-	/* Insertion sort */
+	/**************************** End Bubble Sort *****************************************/
+
+	/*************************************** Insertion Sort ***********************************/
+	/* Insertion sort -- refactor using setTimeouts to allow for animation to be viewed */
 	/*
 	function insertionSortOuter() {
 		for (var i = 0; i < gItemArray.length - 1; i++) {
@@ -301,21 +315,20 @@
 		gGraphics.drawScreen(0);
 	} */
 
-	/* Insertion Sort */
-	function insertionSortOuter(i) {
+	function insertionSortOuter(i, start, end) {
 		i++;
-		gGraphics.drawInPlaceSort(0, gItemArray.length, gGraphics.stdColor, gGraphics.sortedColor);
-		if (i < gItemArray.length - 1) {
-			timer = setTimeout(function() {insertionSortInner(i, i + 1);}, compareSpeed[speed]);
+		gGraphics.drawInPlaceSort(0, start, end, end, gGraphics.stdColor, gGraphics.sortedColor);
+		if (i < end - 1) {
+			timer = setTimeout(function() {insertionSortInner(i, i + 1, start, end);}, compareSpeed[speed]);
 		} else {
 			document.getElementById('message').innerHTML = 'Insertion sort finished.';
-			gGraphics.drawInPlaceSort(0, -1, gGraphics.stdColor, gGraphics.sortedColor);
+			gGraphics.drawInPlaceSort(0, start, end, -1, gGraphics.stdColor, gGraphics.sortedColor);
 		}
 	}
 
-	function insertionSortInner(i, j) {
-		gGraphics.drawInPlaceSort(0, gItemArray.length, gGraphics.stdColor, gGraphics.sortedColor);
-		if (j > 0) {
+	function insertionSortInner(i, j, start, end) {
+		gGraphics.drawInPlaceSort(0, start, end, end, gGraphics.stdColor, gGraphics.sortedColor);
+		if (j > start) {
 			gGraphics.markSwapBase(0, j);
 			gGraphics.markSwapBase(0, j-1);
 			gGraphics.showNextCompare(0, j);
@@ -324,22 +337,26 @@
 				gGraphics.highlightMin(0, j);
 				swapValues(j, j-1);
 				// pass the function that should be called after the swap animation is complete
-				gGraphics.swapElements(0, 1, j-1, j, function() {insertionSortInner(i, j-1);});
+				gGraphics.swapElements(0, 1, j-1, j, function() {insertionSortInner(i, j-1, start, end);});
 			} else {
 				gGraphics.highlightMin(0, j-1);
-				timer = setTimeout(function() {insertionSortOuter(i);}, compareSpeed[speed]);
+				timer = setTimeout(function() {insertionSortOuter(i, start, end);}, compareSpeed[speed]);
 			}
 		} else {
-			insertionSortOuter(i);
+			insertionSortOuter(i, start, end);
 		}
 	}
 
+	/**************************** End Insertion Sort *****************************************/
+
+	/* swaps the values of two array elements */
 	function swapValues(i, j) {
 		var temp = gItemArray.elements[i];
 		gItemArray.elements[i] = gItemArray.elements[j];
 		gItemArray.elements[j] = temp;
 	}
 
+	/* object that controls the drawing of canvas graphics */
 	function GraphicsControl(inCanvas) {
 		this.canvas = new Array();
 		this.context = new Array();
@@ -359,11 +376,12 @@
 		this.sortedColor = "red";
 		this.minColor = "#33ff66";
 		this.compareColor = "#33ccff";
-		this.openSpotColor = "blue";
+		this.openSpotColor = "#33ccff";
 		this.arrowWd = 6;
 		this.arrowHt = 12;
 		this.arrowY = 6;
 
+		/* store a canvas and context for a layer */
 		this.setCanvasLayer = function(layerNo, canvasId) {
 			if (!isNaN(layerNo)) {
 				this.canvas.splice(layerNo, 0, canvasId);
@@ -372,10 +390,12 @@
 			}
 		}
 
+		/* clear a layer's entire canvas */
 		this.clearLayer = function(layer) {
 			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.canvas[layer].height);
 		}
 
+		/* draw the entire array of items in base color on the baseline and with labels */
 		this.drawScreen = function(layer) {
 			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.canvas[layer].height);
 
@@ -385,6 +405,7 @@
 			}
 		}
 
+		/* draw the horizontal line on which the item bars sit */
 		this.drawBaseline = function(layer) {
 			this.context[layer].beginPath();
 			this.context[layer].strokeStyle = this.lineColor;
@@ -395,35 +416,43 @@
 			this.context[layer].closePath();
 		}
 
-		this.drawInPlaceSort = function(layer, switchPt, lowColor, hiColor) {
+		/* draw the item bars, coloring them according to which are already sorted and which
+			remain to be sorted
+		*/
+		this.drawInPlaceSort = function(layer, start, end, switchPt, lowColor, hiColor) {
 			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.canvas[layer].height);
 
-			for (var k = 0; k < gItemArray.length; k++) {
+			for (var k = start; k < end; k++) {
 				var color = hiColor;
 				if (k < switchPt) color = lowColor;
 				this.drawItem(layer, k, color);
 			}
 		}
 
+		/* (re)draw a bar, its label, and the baseline on which it sits */
 		this.drawItem = function(layer, i, color) {
 			this.drawBar(layer, this.calculateX(i), this.startY, this.calculateHt(i), color);
 			this.drawLabel(layer, i, color);
 			this.drawBaseline(layer);
 		}
 
+		/* hide the bars, usually in the base layer, that are going to be moving in an animation */
 		this.hideItem = function(layer, i) {
 			this.context[layer].clearRect(this.calculateX(i)-this.barWd/2, this.arrowHt + this.arrowY, this.barWd*2, this.startY);
 			this.drawBaseline(layer);
 		}
 
+		/* calculate the lower left X position of a bar based on its index in the array */
 		this.calculateX = function(i) {
 			return this.startX + this.barWd/2 + (this.barWd * 2 * i);
 		}
 
+		/* calculate the height of a bar based on its value */
 		this.calculateHt = function(i) {
 			return this.maxHeight * (gItemArray.elements[i] / gItemArray.length);
 		}
 
+		/* draw a bar */
 		this.drawBar = function(layer, x, y, ht, color) {
 			this.context[layer].clearRect(x, this.arrowHt + this.arrowY, this.barWd, this.startY);
 			this.context[layer].beginPath();
@@ -434,6 +463,7 @@
 			this.context[layer].closePath();
 		}
 
+		/* draw a bar's label */
 		this.drawLabel = function(layer, i, color) {
 			var x = this.startX + this.barWd/4 + (this.barWd * 2 * i);
 			this.context[layer].clearRect(x, this.startY + 1, this.barWd, this.startY);
@@ -448,31 +478,38 @@
 			this.context[layer].setTransform(1,0,0,1,0,0);
 		}
 
+		/* draw a black arrow pointing to a bar that is being compared and/or swapped */
 		this.markSwapBase = function(layer, i) {
 			var x = this.calculateX(i);
 			this.drawDownArrow(layer, x, this.arrowY, "black");
 		}
 
+		/* hide a black arrow */
 		this.clearSwapBaseMark = function(layer) {
 			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.arrowHt);
 		}
 
+		/* draw a bar and its label using the color that denotes the item has already been sorted */
 		this.drawSortedItem = function(layer, i) {
 			this.drawItem(layer, i, this.sortedColor);
 		}
 
+		/* draw a bar and its label using the color that denotes it is the current minimum value */
 		this.highlightMin = function(layer, min) {
 			this.drawItem(layer, min, this.minColor);
 		}
 
+		/* draw a bar and its label using the base (unsorted) color */
 		this.drawStandard = function(layer, i) {
 			this.drawItem(layer, i, this.stdColor);
 		}
 
+		/* draw and bar and its label using the color that denotes it is part of the current comparison */
 		this.showNextCompare = function(layer, i) {
 			this.drawItem(layer, i, this.compareColor);
 		}
 
+		/* draw a black arrow that points downward */
 		this.drawDownArrow = function(layer, x,y,color) {
 			var third = this.arrowWd / 3;
 			this.context[layer].beginPath();
@@ -493,6 +530,7 @@
 			this.context[layer].closePath();
 		}
 
+		/* animate the swapping of two bars */
 		this.swapElements = function(baseLayer, swapLayer, i, min, funct) {
 			var x1 = this.calculateX(i);
 			var x2 = this.calculateX(min);
@@ -510,6 +548,7 @@
 			this.slideBars(swapLayer, "up", x1, x2, i, min, ht1, ht2, 0, funct);
 		}
 
+		/* helper function that moves the two bars being swapped */
 		this.slideBars = function(layer, dir, x1, x2, i, min, ht1, ht2, nComplete, funct) {
 			this.clearLayer(layer);
 
