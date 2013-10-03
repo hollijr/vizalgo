@@ -50,6 +50,18 @@
 		document.getElementById('bubbleSort').addEventListener("click", function() {
 			gItemArray.bubbleSort();
 		});
+		document.getElementById('insertionSort').addEventListener("click", function() {
+			gItemArray.insertionSort();
+		});
+		document.getElementById('quickSort').addEventListener("click", function() {
+			gItemArray.quickSort();
+		});
+		document.getElementById('mergeSort').addEventListener("click", function() {
+			gItemArray.mergeSort();
+		});
+		document.getElementById('heapSort').addEventListener("click", function() {
+			gItemArray.heapSort();
+		});
 		document.getElementById('resetOrder').addEventListener("click", function() {
 			gItemArray.reset();
 			gGraphics.drawScreen(0);
@@ -123,7 +135,7 @@
 		this.selectionSort = function() {
 			sortType = "selection";
 			this.clearTimer();
-			document.getElementById('description').innerHTML = "<p>A simple, in-place comparison sort with O(n^2) complexity.  Generally performs worse than insertion sort.</p><p>The algorithm divides the input list into two parts: the sublist of items already sorted, which is built up from left to right at the front (left) of the list, and the sublist of items remaining to be sorted that occupy the rest of the list. Initially, the sorted sublist is empty and the unsorted sublist is the entire input list. The algorithm proceeds by finding the smallest (or largest, depending on sorting order) element in the unsorted sublist, exchanging it with the leftmost unsorted element (putting it in sorted order), and moving the sublist boundaries one element to the right.</p>";
+			document.getElementById('description').innerHTML = "<p><a href='http://en.wikipedia.org/wiki/Selection_sort'>From Wikipedia: </a>A simple, in-place comparison sort with O(n^2) complexity.  Generally performs worse than insertion sort.</p><p>The algorithm divides the input list into two parts: the sublist of items already sorted, which is built up from left to right at the front (left) of the list, and the sublist of items remaining to be sorted that occupy the rest of the list. Initially, the sorted sublist is empty and the unsorted sublist is the entire input list. The algorithm proceeds by finding the smallest (or largest, depending on sorting order) element in the unsorted sublist, exchanging it with the leftmost unsorted element (putting it in sorted order), and moving the sublist boundaries one element to the right.</p>";
 			document.getElementById('message').innerHTML = 'Running selection sort...';
 			document.getElementById('info').style.display = "block";
 			
@@ -133,11 +145,51 @@
 		this.bubbleSort = function() {
 			sortType = "bubble";
 			this.clearTimer();
-			document.getElementById('description').innerHTML = '<p>A simple sorting algorithm that works by repeatedly stepping through the list to be sorted, comparing each pair of adjacent items and swapping them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted. The algorithm gets its name from the way smaller elements "bubble" to the top of the list. Because it only uses comparisons to operate on elements, it is a comparison sort with 0(n^2) complexity. Although the algorithm is simple, most of the other sorting algorithms are more efficient for large lists.</p>';
+			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Bubble_sort">From Wikipedia: </a>A simple sorting algorithm that works by repeatedly stepping through the list to be sorted, comparing each pair of adjacent items and swapping them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted. The algorithm gets its name from the way smaller elements "bubble" to the top of the list. Because it only uses comparisons to operate on elements, it is a comparison sort with 0(n^2) complexity. Although the algorithm is simple, most of the other sorting algorithms are more efficient for large lists.</p><p> The bubble sort algorithm can be easily optimized by observing that the n-th pass finds the n-th largest element and puts it into its final place. So, the inner loop can avoid looking at the last n-1 items when running for the n-th time</p>';
 			document.getElementById('message').innerHTML = 'Running bubble sort...';
 			document.getElementById('info').style.display = "block";
 			
 			bubbleSortOuter(-1, true);			
+		}
+
+		this.insertionSort = function() {
+			sortType = "insertion";
+			this.clearTimer();
+			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Insertion_sort">From Wikipedia: </a>Insertion sort iterates, consuming one input element each repetition, and growing a sorted output list. Each iteration, insertion sort removes one element from the input data, finds the location it belongs within the sorted list, and inserts it there. It repeats until no input elements remain.</p><p>Sorting is typically done in-place, by iterating up the array, growing the sorted list behind it. At each array-position, it checks the value there against the largest value in the sorted list (which happens to be next to it, in the previous array-position checked). If larger, it leaves the element in place and moves to the next. If smaller, it finds the correct position within the sorted list, shifts all the larger values up to make a space, and inserts into that correct position.</p><p>The resulting array after k iterations has the property where the first k + 1 entries are sorted ("+1" because the first entry is skipped). In each iteration the first remaining entry of the input is removed, and inserted into the result at the correct position, thus extending the result:</p>';
+			document.getElementById('message').innerHTML = 'Insertion sort has not been implemented yet.';
+			document.getElementById('info').style.display = "block";
+			
+			insertionSortOuter(-1);
+		}
+
+		this.quickSort = function() {
+			sortType = "quick";
+			this.clearTimer();
+			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Quicksort">From Wikipedia: </a>Quicksort is a divide and conquer algorithm. Quicksort first divides a large list into two smaller sub-lists: the low elements and the high elements. Quicksort can then recursively sort the sub-lists.</p><p>The steps are:</p><ol><li>Pick an element, called a pivot, from the list.</li><li>Reorder the list so that all elements with values less than the pivot come before the pivot, while all elements with values greater than the pivot come after it (equal values can go either way). After this partitioning, the pivot is in its final position. This is called the partition operation.</li><li>Recursively apply the above steps to the sub-list of elements with smaller values and separately the sub-list of elements with greater values.</li></ol><p>The base case of the recursion are lists of size zero or one, which never need to be sorted.</p>';
+			document.getElementById('message').innerHTML = 'Quicksort has not been implemented yet.';
+			document.getElementById('info').style.display = "block";
+			
+			//quickSortOuter(-1, true);			TODO
+		}
+
+		this.mergeSort = function() {
+			sortType = "merge";
+			this.clearTimer();
+			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Merge_sort">From Wikipedia: </a>An O(n log n) comparison-based sorting algorithm. Conceptually, a merge sort works as follows:<ol><li>Divide the unsorted list into n sublists, each containing 1 element (a list of 1 element is considered sorted).</li><li>Repeatedly merge sublists to produce new sublists until there is only 1 sublist remaining. This will be the sorted list.</li></ol></p>';
+			document.getElementById('message').innerHTML = 'Merge sort has not been implemented yet.';
+			document.getElementById('info').style.display = "block";
+			
+			//mergeSortOuter(-1, true);			TODO
+		}
+
+		this.heapSort = function() {
+			sortType = "heap";
+			this.clearTimer();
+			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Heapsort">From Wikipedia: </a>The heapsort algorithm can be divided into two parts.</p><p>In the first step, a heap is built out of the data.</p><p>In the second step, a sorted array is created by repeatedly removing the largest element from the heap, and inserting it into the array. The heap is reconstructed after each removal. Once all objects have been removed from the heap, we have a sorted array. The direction of the sorted elements can be varied by choosing a min-heap or max-heap in step one.</p><p>Heapsort can be performed in place. The array can be split into two parts, the sorted array and the heap. The storage of heaps as arrays is diagrammed here. The heap\'s invariant is preserved after each extraction, so the only cost is that of extraction.</p>';
+			document.getElementById('message').innerHTML = 'Heapsort has not been implemented yet.';
+			document.getElementById('info').style.display = "block";
+			
+			//heapSortOuter(-1, true);		TODO	
 		}
 
 		return this;
@@ -234,6 +286,51 @@
 			}
 		} else {
 			bubbleSortOuter(i, swap);
+		}
+	}
+
+	/* Insertion sort */
+	/*
+	function insertionSortOuter() {
+		for (var i = 0; i < gItemArray.length - 1; i++) {
+			for (var j = i + 1; j > 0; j--) {
+				if (gItemArray.elements[j] >= gItemArray.elements[j-1]) break;
+				swapValues(j, j-1);
+			}
+		}
+		gGraphics.drawScreen(0);
+	} */
+
+	/* Insertion Sort */
+	function insertionSortOuter(i) {
+		i++;
+		gGraphics.drawInPlaceSort(0, gItemArray.length, gGraphics.stdColor, gGraphics.sortedColor);
+		if (i < gItemArray.length - 1) {
+			timer = setTimeout(function() {insertionSortInner(i, i + 1);}, compareSpeed[speed]);
+		} else {
+			document.getElementById('message').innerHTML = 'Insertion sort finished.';
+			gGraphics.drawInPlaceSort(0, -1, gGraphics.stdColor, gGraphics.sortedColor);
+		}
+	}
+
+	function insertionSortInner(i, j) {
+		gGraphics.drawInPlaceSort(0, gItemArray.length, gGraphics.stdColor, gGraphics.sortedColor);
+		if (j > 0) {
+			gGraphics.markSwapBase(0, j);
+			gGraphics.markSwapBase(0, j-1);
+			gGraphics.showNextCompare(0, j);
+			gGraphics.showNextCompare(0, j-1);
+			if (gItemArray.elements[j] < gItemArray.elements[j-1]) {
+				gGraphics.highlightMin(0, j);
+				swapValues(j, j-1);
+				// pass the function that should be called after the swap animation is complete
+				gGraphics.swapElements(0, 1, j-1, j, function() {insertionSortInner(i, j-1);});
+			} else {
+				gGraphics.highlightMin(0, j-1);
+				timer = setTimeout(function() {insertionSortOuter(i);}, compareSpeed[speed]);
+			}
+		} else {
+			insertionSortOuter(i);
 		}
 	}
 
