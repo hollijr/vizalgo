@@ -13,6 +13,28 @@
 	var swapSpeed = [100,50,25];
 	var speed = 1;
 	var sortType = null;
+	var stack = null;
+		
+	/* stack for simulating recursive sorts */
+	function QuickSortObj(left, right, next) {
+		this.right = right;
+		this.left = left;
+		this.next = next;
+	}
+
+	function StackObj() {
+		this.top = null;
+
+		this.push = function(obj) {
+			this.top = obj;
+		}
+
+		this.pop = function() {
+			var obj = this.top;
+			if (this.top !== null) this.top = this.top.next;
+			return obj;
+		}
+	}
 
 	window.addEventListener("load", eventWindowLoaded, false);
 
@@ -156,7 +178,7 @@
 			sortType = "insertion";
 			this.clearTimer();
 			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Insertion_sort">From Wikipedia: </a>Insertion sort iterates, consuming one input element each repetition, and growing a sorted output list. Each iteration, insertion sort removes one element from the input data, finds the location it belongs within the sorted list, and inserts it there. It repeats until no input elements remain.</p><p>Sorting is typically done in-place, by iterating up the array, growing the sorted list behind it. At each array-position, it checks the value there against the largest value in the sorted list (which happens to be next to it, in the previous array-position checked). If larger, it leaves the element in place and moves to the next. If smaller, it finds the correct position within the sorted list, shifts all the larger values up to make a space, and inserts into that correct position.</p><p>The resulting array after k iterations has the property where the first k + 1 entries are sorted ("+1" because the first entry is skipped). In each iteration the first remaining entry of the input is removed, and inserted into the result at the correct position, thus extending the result:</p>';
-			document.getElementById('message').innerHTML = 'Insertion sort has not been implemented yet.';
+			document.getElementById('message').innerHTML = 'Running insertion sort...';
 			document.getElementById('info').style.display = "block";
 			
 			insertionSortOuter(-1, 0, gItemArray.length);
@@ -166,10 +188,12 @@
 			sortType = "quick";
 			this.clearTimer();
 			document.getElementById('description').innerHTML = '<p><a href="http://en.wikipedia.org/wiki/Quicksort">From Wikipedia: </a>Quicksort is a divide and conquer algorithm. Quicksort first divides a large list into two smaller sub-lists: the low elements and the high elements. Quicksort can then recursively sort the sub-lists.</p><p>The steps are:</p><ol><li>Pick an element, called a pivot, from the list.</li><li>Reorder the list so that all elements with values less than the pivot come before the pivot, while all elements with values greater than the pivot come after it (equal values can go either way). After this partitioning, the pivot is in its final position. This is called the partition operation.</li><li>Recursively apply the above steps to the sub-list of elements with smaller values and separately the sub-list of elements with greater values.</li></ol><p>The base case of the recursion are lists of size zero or one, which never need to be sorted.</p>';
-			document.getElementById('message').innerHTML = 'Quicksort has not been implemented yet.';
+			document.getElementById('message').innerHTML = 'Running quicksort...';
 			document.getElementById('info').style.display = "block";
 			
-			//quickSortOuter(-1, true);			TODO
+			stack = new StackObj();
+			stack.push(new QuickSortObj(0, gItemArray.length-1, stack.top));
+			quickSort();
 		}
 
 		this.mergeSort = function() {
@@ -202,8 +226,21 @@
 	   make it work, no further statements are included in the current function path after a 'setTimeout' call.  */
 
 	/*************************************** Selection Sort ***********************************/
-	/* Selection Sort (original nested loop function was refactored into separate 'outer' and 'inner' functions 
+	/* Selection Sort -- refactored into separate 'outer' and 'inner' functions 
 		called using setTimeout) */
+	/*	function selectionSortOuter() {
+		for (var i = 0; i < gItemArray.length - 1; i++) {
+			var min = i;
+			for (var j = i+1; j < gItemArray.length; j++) {
+				if (gItemArray.elements[j] < gItemArray.elements[min]) {
+					min = j;
+				}
+			}
+			swapValues(i, min);
+		}
+		gGraphics.drawScreen(0);
+	} */
+
 	function selSortOuter(i, start, end) {
 		i++;
 		gGraphics.drawInPlaceSort(0, start, end, i, gGraphics.sortedColor, gGraphics.stdColor);
@@ -240,7 +277,7 @@
 				swapValues(i, min);
 				// pass the function that should be called after the swap animation is complete
 				var funct = function() {selSortOuter(i, start, end);}
-				gGraphics.swapElements(0, 1, i, min, funct);
+				gGraphics.swapElements(0, 1, i, min, 'min', funct);
 			} else {
 				selSortOuter(i, start, end);
 			}
@@ -290,7 +327,7 @@
 				swapValues(j, j+1);
 				swap = true;
 				// pass the function that should be called after the swap animation is complete
-				gGraphics.swapElements(0, 1, j, j+1, function() {bubbleSortInner(i, j, true, start, end);});
+				gGraphics.swapElements(0, 1, j, j+1, 'min', function() {bubbleSortInner(i, j, true, start, end);});
 			} else {
 				gGraphics.highlightMin(0, j);
 				timer = setTimeout(function() {bubbleSortInner(i, j, swap, start, end);}, compareSpeed[speed]);
@@ -337,7 +374,7 @@
 				gGraphics.highlightMin(0, j);
 				swapValues(j, j-1);
 				// pass the function that should be called after the swap animation is complete
-				gGraphics.swapElements(0, 1, j-1, j, function() {insertionSortInner(i, j-1, start, end);});
+				gGraphics.swapElements(0, 1, j-1, j, 'min', function() {insertionSortInner(i, j-1, start, end);});
 			} else {
 				gGraphics.highlightMin(0, j-1);
 				timer = setTimeout(function() {insertionSortOuter(i, start, end);}, compareSpeed[speed]);
@@ -348,6 +385,132 @@
 	}
 
 	/**************************** End Insertion Sort *****************************************/
+
+	/*************************************** QuickSort ***********************************/
+	/* Quick sort -- refactor using setTimeouts to allow for animation to be viewed */
+	/*
+	function quickSort(left, right) { 
+		if (left < right) {
+			var pivot = chooseMedian(left, left + Math.floor((right-left)/2), right);
+			pivot = partition(left, right, pivot);
+			if (pivot - left < gItemArray.length - right) {
+				quickSort(left, pivot-1);
+				quickSort(pivot+1, right);
+			} else {
+				quickSort(pivot+1, right);
+				quickSort(left, pivot-1);
+			}
+		}
+		gGraphics.drawScreen(0);
+	} 
+
+	function chooseMedian(first, middle, last) {
+		if ((gItemArray.elements[first] <= gItemArray.elements[middle] && gItemArray.elements[middle] <= gItemArray.elements[last]) ||
+			(gItemArray.elements[last] <= gItemArray.elements[middle] && gItemArray.elements[middle] <= gItemArray.elements[first])) {
+			return middle;
+		} else if ((gItemArray.elements[middle] <= gItemArray.elements[first] 
+						&& gItemArray.elements[first] <= gItemArray.elements[last]) ||
+					(gItemArray.elements[last] <= gItemArray.elements[first] 
+						&& gItemArray.elements[first] <= gItemArray.elements[middle])) {
+			return first;
+		} else {
+			return last;
+		}
+	}
+
+	function partition(left, right, pivot) {
+		swapValues(pivot, right);
+		pivot = left;
+		for (var i = left; i < right; i++) {
+			if (gItemArray.elements[i] < gItemArray.elements[right]) {
+				swapValues(pivot, i);
+				pivot++;
+			}
+		}
+		swapValues(right, pivot);
+		return pivot;
+	}
+	*/
+
+	/* Need to use stack to simulate recursion.  Can't use actual recursion because need to use setTimeout for
+		animation, which means calls have to be sequential.
+	*/
+
+	function quickSort() {
+		var obj = stack.pop();
+		if (obj !== null) {
+			if (obj.left < obj.right) {
+				document.getElementById('message').innerHTML = 'Choosing new pivot within range ' + obj.left + ' to ' + obj.right;
+				var pivot = chooseMedian(obj.left, obj.left + Math.floor((obj.right-obj.left)/2), obj.right);
+				gGraphics.drawDivideAndConquerSort(0, obj.left, obj.right, pivot);
+				timer = setTimeout(function() {partition(obj.left, obj.right, pivot, null);}, compareSpeed[speed]);
+			} else {
+				timer = setTimeout(function() {quickSort();}, compareSpeed[speed]);
+			}
+		} else {
+			document.getElementById('message').innerHTML = 'Quicksort finished.';
+			gGraphics.drawInPlaceSort(0, 0, gItemArray.length, gItemArray.length, gGraphics.sortedColor, gGraphics.stdColor);
+		}
+	}
+
+	function chooseMedian(first, middle, last) {
+		if ((gItemArray.elements[first] <= gItemArray.elements[middle] && gItemArray.elements[middle] <= gItemArray.elements[last]) ||
+			(gItemArray.elements[last] <= gItemArray.elements[middle] && gItemArray.elements[middle] <= gItemArray.elements[first])) {
+			return middle;
+		} else if ((gItemArray.elements[middle] <= gItemArray.elements[first] 
+						&& gItemArray.elements[first] <= gItemArray.elements[last]) ||
+					(gItemArray.elements[last] <= gItemArray.elements[first] 
+						&& gItemArray.elements[first] <= gItemArray.elements[middle])) {
+			return first;
+		} else {
+			return last;
+		}
+	}
+
+	function partition(left, right, pivot, i) {
+		gGraphics.markSwapBase(0, pivot);
+		if (i == null) {
+			swapValues(pivot, right);
+			// pass the function that should be called after the swap animation is complete
+			gGraphics.swapElements(0, 1, pivot, right, 'pivot', function() {partition(left, right, left, left-1);});
+		} 
+		else {
+			document.getElementById('message').innerHTML = 'Partitioning elements ' + left + ' to ' + right;
+			gGraphics.drawDivideAndConquerSort(0, left, right, right);
+			gGraphics.markSwapBase(0, pivot);
+			i++;
+			if (i < right) {
+				gGraphics.showNextCompare(0, i);
+				if (gItemArray.elements[i] < gItemArray.elements[right]) {
+					swapValues(pivot, i);
+					gGraphics.swapElements(0, 1, pivot, i, 'min', function() {partition(left, right, pivot+1, i);});
+				} else {
+					timer = setTimeout(function() {partition(left, right, pivot, i);}, compareSpeed[speed]);
+				}
+			} else {
+				document.getElementById('message').innerHTML += '...DONE';
+				swapValues(right, pivot);
+				gGraphics.swapElements(0, 1, right, pivot, 'pivot', function() {quickSortTail(left, right, pivot);});
+			}
+		}
+	}
+
+	function quickSortTail(left, right, pivot) {
+		/* though the sort is optimized by partitioning the smaller subarray first,
+			it's less intuitive to watch the sort "jump around" during animation
+			so will always partition the lower subarray first */
+		//if (pivot - left < gItemArray.length - right) {
+			stack.push(new QuickSortObj(pivot+1, right, stack.top));
+			stack.push(new QuickSortObj(left, pivot-1, stack.top));
+		//} else {
+		//	stack.push(new QuickSortObj(left, pivot-1, stack.top));
+		//	stack.push(new QuickSortObj(pivot+1, right, stack.top));
+		//}
+		quickSort();
+	} 
+
+
+	/**************************** End QuickSort *****************************************/
 
 	/* swaps the values of two array elements */
 	function swapValues(i, j) {
@@ -377,6 +540,10 @@
 		this.minColor = "#33ff66";
 		this.compareColor = "#33ccff";
 		this.openSpotColor = "#33ccff";
+		this.pivotPtColor = "#33ff66";
+		this.pivotColor = "#ff99ff";
+		this.activeColor = "blue";
+		this.inactiveColor = "#cccccc";
 		this.arrowWd = 6;
 		this.arrowHt = 12;
 		this.arrowY = 6;
@@ -428,6 +595,25 @@
 				this.drawItem(layer, k, color);
 			}
 		}
+
+		/* Redraw current state of divide and conquer sort where pivot is marked separately, 
+			current subset of array being processed is highlighted while rest of array is
+			kept in 'disabled' color.
+		*/
+		this.drawDivideAndConquerSort = function(layer, left, right, pivot) {
+			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.canvas[layer].height);
+			gGraphics.clearSwapBaseMark(0);
+			gGraphics.markRange(0, left);
+			gGraphics.markRange(0, right);
+
+			for (var k = 0; k < gItemArray.length; k++) {
+				var color = this.activeColor;
+				if (k == pivot) color = this.pivotColor;
+				else if (k < left || k >= right) color = this.inactiveColor;
+				this.drawItem(layer, k, color);
+			}
+		}
+
 
 		/* (re)draw a bar, its label, and the baseline on which it sits */
 		this.drawItem = function(layer, i, color) {
@@ -484,9 +670,14 @@
 			this.drawDownArrow(layer, x, this.arrowY, "black");
 		}
 
+		this.markRange = function(layer, i) {
+			var x = this.calculateX(i);
+			this.drawDownArrow(layer, x, this.arrowY, this.activeColor);
+		}
+
 		/* hide a black arrow */
 		this.clearSwapBaseMark = function(layer) {
-			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.arrowHt);
+			this.context[layer].clearRect(0, 0, this.canvas[layer].width, this.arrowY+this.arrowHt);
 		}
 
 		/* draw a bar and its label using the color that denotes the item has already been sorted */
@@ -497,6 +688,11 @@
 		/* draw a bar and its label using the color that denotes it is the current minimum value */
 		this.highlightMin = function(layer, min) {
 			this.drawItem(layer, min, this.minColor);
+		}
+
+		/* draw a bar and its label using the color that denotes it is the current minimum value */
+		this.highlightPivotPoint = function(layer, pivot) {
+			this.drawItem(layer, pivot, this.pivotPtColor);
 		}
 
 		/* draw a bar and its label using the base (unsorted) color */
@@ -531,53 +727,61 @@
 		}
 
 		/* animate the swapping of two bars */
-		this.swapElements = function(baseLayer, swapLayer, i, min, funct) {
-			var x1 = this.calculateX(i);
-			var x2 = this.calculateX(min);
-			/* for first bar's height, use the value from 'min' since they're already swapped in the array.
+		this.swapElements = function(baseLayer, swapLayer, i, j, type, funct) {
+			var ix = this.calculateX(i);
+			var jx = this.calculateX(j);
+
+			/* for first bar's height, use the value from 'j' since they're already swapped in the array.
 			Use the value from 'i' for the second bar's height
 			*/
-			var ht1 = this.calculateHt(min);
-			var ht2 = this.calculateHt(i);
+			var iht = this.calculateHt(j);
+			var jht = this.calculateHt(i);
 
 			// hide bars being switched in base layer
 			this.hideItem(baseLayer, i);
-			this.hideItem(baseLayer, min);
+			this.hideItem(baseLayer, j);
+
+			var icolor = this.openSpotColor;
+			var	jcolor = this.minColor;
+			if (type == 'pivot') {
+				icolor = this.pivotColor;
+				jcolor = this.openSpotColor;
+			} 
 
 			// animate swap
-			this.slideBars(swapLayer, "up", x1, x2, i, min, ht1, ht2, 0, funct);
+			this.slideBars(swapLayer, "up", ix, jx, i, j, iht, jht, icolor, jcolor, 0, funct);
 		}
 
 		/* helper function that moves the two bars being swapped */
-		this.slideBars = function(layer, dir, x1, x2, i, min, ht1, ht2, nComplete, funct) {
+		this.slideBars = function(layer, dir, ix, jx, i, j, iht, jht, icolor, jcolor, nComplete, funct) {
 			this.clearLayer(layer);
 
 			if (dir == "up") {
 				if (nComplete < 5) {
 					// draw bars
-					gGraphics.drawBar(layer, x1, this.startY - nComplete, ht1, this.openSpotColor);
-					gGraphics.drawBar(layer, x2, this.startY - nComplete, ht2, this.minColor);
-					timer = setTimeout(function() {gGraphics.slideBars(layer, "up", x1, x2, i, min, ht1, ht2, nComplete+1, funct);}, swapSpeed[speed]);
+					gGraphics.drawBar(layer, ix, this.startY - nComplete, iht, icolor);
+					gGraphics.drawBar(layer, jx, this.startY - nComplete, jht, jcolor);
+					timer = setTimeout(function() {gGraphics.slideBars(layer, "up", ix, jx, i, j, iht, jht, icolor, jcolor, nComplete+1, funct);}, swapSpeed[speed]);
 				} else {
-					this.slideBars(layer, "side", x1, x2, i, min, ht1, ht2, 0, funct);
+					this.slideBars(layer, "side", ix, jx, i, j, iht, jht, icolor, jcolor, 0, funct);
 				}
 			} else if (dir == "side") {
-				var range = min - i;
+				var range = j - i;
 				var y = (nComplete <= range) ? nComplete : 2 * range - nComplete;
 				if (nComplete < range * 2) {
-					x1 += this.barWd;
-					x2 -= this.barWd;
-					gGraphics.drawBar(layer, x1, this.startY - 5 - y, ht1, this.openSpotColor);
-					gGraphics.drawBar(layer, x2, this.startY - 5 - y, ht2, this.minColor);
-					timer = setTimeout(function() {gGraphics.slideBars(layer, "side", x1, x2, i, min, ht1, ht2, nComplete+1, funct);}, swapSpeed[speed]);
+					ix += this.barWd;
+					jx -= this.barWd;
+					gGraphics.drawBar(layer, ix, this.startY - 5 - y, iht, icolor);
+					gGraphics.drawBar(layer, jx, this.startY - 5 - y, jht, jcolor);
+					timer = setTimeout(function() {gGraphics.slideBars(layer, "side", ix, jx, i, j, icolor, jcolor, iht, jht, nComplete+1, funct);}, swapSpeed[speed]);
 				} else {
-					this.slideBars(layer, "down", x1, x2, i, min, ht1, ht2, 0, funct);
+					this.slideBars(layer, "down", ix, jx, i, j, iht, jht, icolor, jcolor, 0, funct);
 				}
 			} else if (dir == "down") {
 				if (nComplete < 5) {
-					gGraphics.drawBar(layer, x1, this.startY - 5 + nComplete, ht1, this.openSpotColor);
-					gGraphics.drawBar(layer, x2, this.startY - 5 + nComplete, ht2, this.minColor);
-					timer = setTimeout(function() {gGraphics.slideBars(layer, "down", x1, x2, i, min, ht1, ht2, nComplete+1, funct);}, swapSpeed[speed]);
+					gGraphics.drawBar(layer, ix, this.startY - 5 + nComplete, iht, icolor);
+					gGraphics.drawBar(layer, jx, this.startY - 5 + nComplete, jht, jcolor);
+					timer = setTimeout(function() {gGraphics.slideBars(layer, "down", ix, jx, i, j, iht, jht, icolor, jcolor, nComplete+1, funct);}, swapSpeed[speed]);
 				} else {
 					funct();
 				}
@@ -654,32 +858,41 @@
 		clear: both;
 		display: block;
 		left: 25px;
-		text-align: left;
-		line-height: 2;
+		text-align: center;
+		line-height: 1;
 		font-size: 0.95em;
+		padding-top: 5px;
+		width: 250px;
 	}
 	#sorted {
 		background-color: red;
 	}
 	#currMin {
-		background-color: #33ff66;
+		background-color: #3f6;
 	}
 	#currCompare {
-		background-color: #33ccff;
+		background-color: #3cf;
+	}
+	#pivot {
+		background-color: #f9f;
 	}
 	.text {
-		width: 70px;
+		width: 55px;
 		float: left;
 		padding-left: 5px;
 	}
 	#speed {
-		margin-top: 160px;
+		margin-top: 170px;
+		margin-bottom: 10px;
 		left: 25px;
 		position: absolute;
 		display: block;
-		width: 100%;
+		width: 250px;
 		height: 20px;
 		font-size: 0.6em;
+		border: solid 1px #333;
+		background-color: #fcfcfc;
+		text-align: center;
 	}
 
 	/* Info section */
@@ -690,7 +903,7 @@
 		margin: 0px;
 		float: right;
 		background-color: #eee;
-		margin-top: 25px;
+		margin-top: 30px;
 		display: none;
 	}
 	#message {
@@ -707,7 +920,7 @@
 	.controls {
 		width: 250px;
 		position: absolute;
-		margin-top: 190px;
+		margin-top: 200px;
 		left: 25px;
 		border: none;
 	}
@@ -735,9 +948,10 @@
 		<canvas id="canvas1"></canvas>
 		<div id="legend">
 			<div id="sorted" class="box"></div><div class="text">Sorted</div>
-			<div id="currMin" class="box"></div><div class="text">Current Min</div>
-			<div id="currCompare" class="box"></div><div class="text">Next Compare</div>
-			<p id="openSpot">(The black arrow indicates where the next sorted value goes)</p>
+			<div id="currMin" class="box"></div><div class="text">Lesser/Min</div>
+			<div id="currCompare" class="box"></div><div class="text">Compare</div>
+			<div id="pivot" class="box"></div><div class="text">Pivot</div>
+			<p id="openSpot">Black arrows indicate where the next sorted value goes.<br>Blue arrows indicate the range of elements being sorted.</p>
 		</div>
 		<section id="speed">
 			Animation Speed:
