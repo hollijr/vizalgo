@@ -490,7 +490,7 @@
 			} else {
 				document.getElementById('message').innerHTML += '...DONE';
 				swapValues(right, pivot);
-				gGraphics.swapElements(0, 1, right, pivot, 'pivot', function() {quickSortTail(left, right, pivot);});
+				gGraphics.swapElements(0, 1, pivot, right, 'reversePivot', function() {quickSortTail(left, right, pivot);});
 			}
 		}
 	}
@@ -746,7 +746,9 @@
 			if (type == 'pivot') {
 				icolor = this.pivotColor;
 				jcolor = this.openSpotColor;
-			} 
+			} else if (type == 'reversePivot') {
+				jcolor = this.pivotColor;
+			}
 
 			// animate swap
 			this.slideBars(swapLayer, "up", ix, jx, i, j, iht, jht, icolor, jcolor, 0, funct);
@@ -760,7 +762,7 @@
 				if (nComplete < 5) {
 					// draw bars
 					gGraphics.drawBar(layer, ix, this.startY - nComplete, iht, icolor);
-					gGraphics.drawBar(layer, jx, this.startY - nComplete, jht, jcolor);
+					if (i != j) gGraphics.drawBar(layer, jx, this.startY - nComplete, jht, jcolor);
 					timer = setTimeout(function() {gGraphics.slideBars(layer, "up", ix, jx, i, j, iht, jht, icolor, jcolor, nComplete+1, funct);}, swapSpeed[speed]);
 				} else {
 					this.slideBars(layer, "side", ix, jx, i, j, iht, jht, icolor, jcolor, 0, funct);
@@ -779,7 +781,7 @@
 				}
 			} else if (dir == "down") {
 				if (nComplete < 5) {
-					gGraphics.drawBar(layer, ix, this.startY - 5 + nComplete, iht, icolor);
+					if (i != j) gGraphics.drawBar(layer, ix, this.startY - 5 + nComplete, iht, icolor);
 					gGraphics.drawBar(layer, jx, this.startY - 5 + nComplete, jht, jcolor);
 					timer = setTimeout(function() {gGraphics.slideBars(layer, "down", ix, jx, i, j, iht, jht, icolor, jcolor, nComplete+1, funct);}, swapSpeed[speed]);
 				} else {
