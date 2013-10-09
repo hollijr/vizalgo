@@ -228,7 +228,7 @@
 			document.getElementById('message').innerHTML = 'Heapsort has not been implemented yet.';
 			document.getElementById('info').style.display = "block";
 			
-			//heapSortOuter(-1, true);		TODO	
+			heapSort();		
 		}
 
 		return this;
@@ -576,6 +576,11 @@
 			
 			
 			if (i+width < numItems) {
+				// even though the left half of the animation could conceivably complete before the right half, which would mean'
+				// processing will continue on the sort even if the bars aren't all the way at the top, it's unlikely so for now, I'm
+				// going to rely on it not happening enough to cause a problem.  If it does, I'll have to set a conditional to check 
+				// before calling 'mergeSubSort' that indicates whether both halves of the sublist have reached their destination points.
+
 				// slide the right half of the active range up
 				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){});
 				// slide the left half of the active range up
@@ -620,6 +625,122 @@
 	}
 
 	/**************************** End MergeSort *****************************************/
+
+	/*************************************** HeapSort ***********************************/
+	/* Heapsort -- refactor using setTimeouts to allow for animation to be viewed */
+
+	function heapSort() { 
+
+		// build heap
+		for (var i = Math.floor((numItems-2)/2); i >= 0; i--) {
+			siftDown(i, numItems-1);
+		}
+
+		// reorder array
+		// swap first element with one less than last sorted element (or
+		// last element if first pass) then sift down first element
+		for (var i = numItems-1; i > 0; i--) {
+			swapValues(0, i);
+			gGraphics.swapCoordinates(0, i);
+			siftDown(0, i-1);
+		}
+		document.getElementById('message').innerHTML = 'Heapsort finished.';
+		gGraphics.drawInPlaceSort(0, 0, gItemArray.length, gItemArray.length, gGraphics.sortedColor, gGraphics.stdColor);
+	} 
+
+	function siftDown(start, end) {
+		// end is last element
+		var swap = start;
+		if (2*start + 1 <= end && gItemArray.elements[swap] < gItemArray.elements[2*start + 1]) {
+			swap =  2*start + 1;
+		}
+		if (2*start + 2 <= end && gItemArray.elements[swap] < gItemArray.elements[2*start + 2]) {
+			swap =  2*start + 2;
+		}
+
+		if (swap !== start) {
+			swapValues(swap, start);
+			gGraphics.swapCoordinates(swap, start);
+			siftDown(swap, end);
+		} else {
+			// placeholder
+		}
+	}
+	
+/*
+	function mergeSortOuter(width, sorted) { 
+		// starting with runs of 2, sort each run, then double the run length
+		// and repeat sort until entire array is merged
+		if (width < gItemArray.length) {
+			mergeSortInner(width, sorted, 0);			
+		} else {
+			document.getElementById('message').innerHTML = 'Merge Sort finished.';
+			gGraphics.drawInPlaceSort(0, 0, gItemArray.length, gItemArray.length, gGraphics.sortedColor, gGraphics.stdColor);
+		}
+		
+	} 
+
+	function mergeSortInner(width, sorted, i) {
+		if (i < gItemArray.length) {
+			var right = Math.min(i+width, gItemArray.length);
+			var end = Math.min(i+2*width, gItemArray.length);
+			// draw items on baseline, highlighting just the active range
+			gGraphics.drawDivideAndConquerSort(0, i, end-1, gItemArray.length);
+			// hide the active range
+			gGraphics.hideRangeOfItems(0, i, end);
+			
+			
+			if (i+width < numItems) {
+				// even though the left half of the animation could conceivably complete before the right half, which would mean'
+				// processing will continue on the sort even if the bars aren't all the way at the top, it's unlikely so for now, I'm
+				// going to rely on it not happening enough to cause a problem.  If it does, I'll have to set a conditional to check 
+				// before calling 'mergeSubSort' that indicates whether both halves of the sublist have reached their destination points.
+
+				// slide the right half of the active range up
+				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){});
+				// slide the left half of the active range up
+				gGraphics.slideRangeOfBars(1, i+width, width, gGraphics.bars[i+width].x, gGraphics.bars[i+width].y, gGraphics.bars[i+width].x+2, gGraphics.startY/2, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
+			} else {
+				// slide the right half of the active range up
+				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
+			}
+			
+		} else {
+			// copy the sorted values back to the elements array
+			// use Array's slice function to ensure deep copy
+			gItemArray.elements = sorted.slice(0);
+			sorted.length = 0;
+			mergeSortOuter(width*2, sorted);
+		}
+	}
+
+	function mergeSubsort(left, right, end, sorted, i, lptr, rptr) {
+		// lptr and rptr are pointers to the next element in the left and right, respectively, sublists
+		if (i < end) {
+			if (lptr < right) gGraphics.drawBar(1, gGraphics.bars[lptr].x, gGraphics.bars[lptr].y, gGraphics.bars[lptr].h, gGraphics.compareColor);
+			if (rptr < end) gGraphics.drawBar(1, gGraphics.bars[rptr].x, gGraphics.bars[rptr].y, gGraphics.bars[rptr].h, gGraphics.compareColor);
+			if (lptr < right && (gItemArray.elements[lptr] <= gItemArray.elements[rptr] || rptr >= end)) {
+				sorted[i] = gItemArray.elements[lptr];
+				gGraphics.hideBar(1, lptr);
+				gGraphics.flashAndMoveBar(2, lptr, gGraphics.calculateX(i), gGraphics.startY, 0, function(){gGraphics.sortBar(i, lptr); mergeSubsort(left, right, end, sorted, i+1, lptr+1, rptr);});
+				//timer = setTimeout(function() {mergeSubsort(left, right, end, sorted, i+1, lptr+1, rptr);}, compareSpeed[speed]);
+			} else {
+				sorted[i] = gItemArray.elements[rptr];	
+				gGraphics.hideBar(1, rptr);
+				gGraphics.flashAndMoveBar(2, rptr, gGraphics.calculateX(i), gGraphics.startY, 0, function(){gGraphics.sortBar(i, rptr); mergeSubsort(left, right, end, sorted, i+1, lptr, rptr+1);});
+				//timer = setTimeout(function() {mergeSubsort(left, right, end, sorted, i+1, lptr, rptr+1);}, compareSpeed[speed]);
+			}
+		} else {
+			gGraphics.copyBars(left, end);
+			gGraphics.clearLayer(1);
+			gGraphics.clearLayer(2);
+			mergeSortInner(right-left, sorted, left+2*(right-left));
+		}
+		
+	}
+	*/
+
+	/**************************** End HeapSort *****************************************/
 
 
 	/* swaps the values of two array elements */
@@ -845,6 +966,16 @@
 			var temp = this.bars.slice(0, left).concat(this.sortedBars.slice(left, end)).concat(this.bars.slice(end));
 			this.bars = temp;
 		}
+
+		/* swap the coordinates of two bars */
+		this.swapCoordinates = function(i, j) {
+			var tempX = this.bars[i].x;
+			var tempY = this.bars[i].y;
+			this.bars[i].x = this.bars[j].x;
+			this.bars[i].y = this.bars[j].y;
+			this.bars[j].x = tempX;
+			this.bars[j].y = tempY;
+		}		
 
 		/* move a bar from its current coordinates to new coordinates */
 		this.moveBar = function(layer, idx, newX, newY, color) {
