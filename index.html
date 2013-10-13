@@ -13,6 +13,7 @@
 	var compareSpeed = [200,100,50];
 	var swapSpeed = [100,50,25];
 	var flashSpeed = [300,150,75];
+	var heapSpeed = [1000,500,250];
 	var speed = 1;
 	var sortType = null;
 	var stack = null;
@@ -228,7 +229,10 @@
 			document.getElementById('message').innerHTML = 'Heapsort has not been implemented yet.';
 			document.getElementById('info').style.display = "block";
 			
-			heapSort();		
+			gGraphics.drawTree(1, gGraphics.textColor, gGraphics.activeColor, gGraphics.lineColor, 0, function() {
+				buildHeap(Math.floor((numItems-2)/2));
+			});
+					
 		}
 
 		return this;
@@ -582,12 +586,12 @@
 				// before calling 'mergeSubSort' that indicates whether both halves of the sublist have reached their destination points.
 
 				// slide the right half of the active range up
-				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){});
+				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY*0.6, gGraphics.stdColor, function(){});
 				// slide the left half of the active range up
-				gGraphics.slideRangeOfBars(1, i+width, width, gGraphics.bars[i+width].x, gGraphics.bars[i+width].y, gGraphics.bars[i+width].x+2, gGraphics.startY/2, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
+				gGraphics.slideRangeOfBars(1, i+width, width, gGraphics.bars[i+width].x, gGraphics.bars[i+width].y, gGraphics.bars[i+width].x+2, gGraphics.startY*0.6, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
 			} else {
 				// slide the right half of the active range up
-				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
+				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY*0.6, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
 			}
 			
 		} else {
@@ -628,7 +632,7 @@
 
 	/*************************************** HeapSort ***********************************/
 	/* Heapsort -- refactor using setTimeouts to allow for animation to be viewed */
-
+	/*
 	function heapSort() { 
 
 		// build heap
@@ -665,80 +669,65 @@
 		} else {
 			// placeholder
 		}
-	}
+	} 
+	*/
 	
-/*
-	function mergeSortOuter(width, sorted) { 
-		// starting with runs of 2, sort each run, then double the run length
-		// and repeat sort until entire array is merged
-		if (width < gItemArray.length) {
-			mergeSortInner(width, sorted, 0);			
+	/* Reorders array as max heap */
+	function buildHeap(i) {
+		document.getElementById('message').innerHTML = 'Building max heap...';
+		if (i >= 0) {
+			gGraphics.drawNode(1, i, gGraphics.textColor, gGraphics.compareColor, gGraphics.lineColor, 1)
+			timer = setTimeout(function() {gGraphics.drawNode(1, i, gGraphics.textColor, gGraphics.activeColor, gGraphics.lineColor, 1);siftDown(i, numItems-1, function(){buildHeap(i-1);})}, heapSpeed[speed]);
 		} else {
-			document.getElementById('message').innerHTML = 'Merge Sort finished.';
+			heapSort(numItems-1);
+		}
+	}
+
+	function heapSort(i) { 
+		document.getElementById('message').innerHTML = 'Sorting array from heap values...';
+		// reorder array from min to max
+		// swap first element with one less than last sorted element (or
+		// last element if first pass) then sift down first element
+		if (i > 0) {
+			gGraphics.hideNode(1, 0);
+			swapValues(0, i);
+			gGraphics.swapCoordinates(0, i);
+			gGraphics.drawSortedItem(0, i);
+			timer = setTimeout(function() {
+				gGraphics.drawNode(1, 0, gGraphics.textColor, gGraphics.activeColor, gGraphics.lineColor);
+				gGraphics.hideNode(1, i);
+				timer = setTimeout(function() {siftDown(0, i-1, function(){heapSort(i-1);});}, heapSpeed[speed]);
+			}, heapSpeed[speed]);	
+		} else {
+			gGraphics.clearLayer(2);
+			gGraphics.clearLayer(1);
+			document.getElementById('message').innerHTML = 'Heapsort finished.';
 			gGraphics.drawInPlaceSort(0, 0, gItemArray.length, gItemArray.length, gGraphics.sortedColor, gGraphics.stdColor);
 		}
-		
 	} 
 
-	function mergeSortInner(width, sorted, i) {
-		if (i < gItemArray.length) {
-			var right = Math.min(i+width, gItemArray.length);
-			var end = Math.min(i+2*width, gItemArray.length);
-			// draw items on baseline, highlighting just the active range
-			gGraphics.drawDivideAndConquerSort(0, i, end-1, gItemArray.length);
-			// hide the active range
-			gGraphics.hideRangeOfItems(0, i, end);
-			
-			
-			if (i+width < numItems) {
-				// even though the left half of the animation could conceivably complete before the right half, which would mean'
-				// processing will continue on the sort even if the bars aren't all the way at the top, it's unlikely so for now, I'm
-				// going to rely on it not happening enough to cause a problem.  If it does, I'll have to set a conditional to check 
-				// before calling 'mergeSubSort' that indicates whether both halves of the sublist have reached their destination points.
 
-				// slide the right half of the active range up
-				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){});
-				// slide the left half of the active range up
-				gGraphics.slideRangeOfBars(1, i+width, width, gGraphics.bars[i+width].x, gGraphics.bars[i+width].y, gGraphics.bars[i+width].x+2, gGraphics.startY/2, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
-			} else {
-				// slide the right half of the active range up
-				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY/2, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
-			}
-			
+
+	function siftDown(start, end, funct) {
+		// end is last element
+		var swap = start;
+		if (2*start + 1 <= end && gItemArray.elements[swap] < gItemArray.elements[2*start + 1]) {
+			swap =  2*start + 1;
+		}
+		if (2*start + 2 <= end && gItemArray.elements[swap] < gItemArray.elements[2*start + 2]) {
+			swap =  2*start + 2;
+		}
+
+		if (swap !== start) {
+			swapValues(swap, start);
+			gGraphics.markParentChild(1, swap, start, gGraphics.textColor, gGraphics.nodeHighlight, gGraphics.nodeHighlight);
+			gGraphics.swapCoordinates(swap, start);
+			timer = setTimeout(function() {gGraphics.markParentChild(1, swap, start, gGraphics.textColor, gGraphics.activeColor, gGraphics.lineColor); siftDown(swap, end, funct);}, heapSpeed[speed]);
 		} else {
-			// copy the sorted values back to the elements array
-			// use Array's slice function to ensure deep copy
-			gItemArray.elements = sorted.slice(0);
-			sorted.length = 0;
-			mergeSortOuter(width*2, sorted);
+			// placeholder
+			timer = setTimeout(function() {funct();}, heapSpeed[speed]);
 		}
 	}
-
-	function mergeSubsort(left, right, end, sorted, i, lptr, rptr) {
-		// lptr and rptr are pointers to the next element in the left and right, respectively, sublists
-		if (i < end) {
-			if (lptr < right) gGraphics.drawBar(1, gGraphics.bars[lptr].x, gGraphics.bars[lptr].y, gGraphics.bars[lptr].h, gGraphics.compareColor);
-			if (rptr < end) gGraphics.drawBar(1, gGraphics.bars[rptr].x, gGraphics.bars[rptr].y, gGraphics.bars[rptr].h, gGraphics.compareColor);
-			if (lptr < right && (gItemArray.elements[lptr] <= gItemArray.elements[rptr] || rptr >= end)) {
-				sorted[i] = gItemArray.elements[lptr];
-				gGraphics.hideBar(1, lptr);
-				gGraphics.flashAndMoveBar(2, lptr, gGraphics.calculateX(i), gGraphics.startY, 0, function(){gGraphics.sortBar(i, lptr); mergeSubsort(left, right, end, sorted, i+1, lptr+1, rptr);});
-				//timer = setTimeout(function() {mergeSubsort(left, right, end, sorted, i+1, lptr+1, rptr);}, compareSpeed[speed]);
-			} else {
-				sorted[i] = gItemArray.elements[rptr];	
-				gGraphics.hideBar(1, rptr);
-				gGraphics.flashAndMoveBar(2, rptr, gGraphics.calculateX(i), gGraphics.startY, 0, function(){gGraphics.sortBar(i, rptr); mergeSubsort(left, right, end, sorted, i+1, lptr, rptr+1);});
-				//timer = setTimeout(function() {mergeSubsort(left, right, end, sorted, i+1, lptr, rptr+1);}, compareSpeed[speed]);
-			}
-		} else {
-			gGraphics.copyBars(left, end);
-			gGraphics.clearLayer(1);
-			gGraphics.clearLayer(2);
-			mergeSortInner(right-left, sorted, left+2*(right-left));
-		}
-		
-	}
-	*/
 
 	/**************************** End HeapSort *****************************************/
 
@@ -764,10 +753,13 @@
 		this.context.push(cxt);
 
 		this.startX = 5;
-		this.startY = 130;
-		this.maxHeight = 60;
+		this.startY = 180;
+		this.maxHeight = 50;
 		this.barWd = 6;
 		this.labelFnt = "7pt Arial";
+		this.textColor = "white";
+		this.nodeFont = "6pt Arial";
+		this.nodeHighlight = "red";
 		this.divideColor = "#aaa";
 		this.lineColor = "black";
 		this.stdColor = "blue";
@@ -779,11 +771,13 @@
 		this.pivotColor = "#ff99ff";
 		this.activeColor = "blue";
 		this.inactiveColor = "#cccccc";
+		this.backgroundColor = "#ffff99";
 		this.arrowWd = 6;
 		this.arrowHt = 12;
 		this.arrowY = 6;
 		this.bars = new Array(numItems);
 		this.sortedBars = new Array(numItems);
+		this.nodeLocations = new Array(numItems);
 
 		/* a bar object 
 		this.bar = function(x, y, z) {
@@ -794,10 +788,23 @@
 
 		/* load bars array */
 		this.createBars = function() {
+			var yGap = (this.startY-this.maxHeight) / (this.calculateLevel(numItems) + 1);
+			var level = 0, sum = 1, iPerRow = 1;
+
 			for (var i = 0; i < numItems; i++) {
 				// instead of creating an object (above), just pass a map object.  Both ways work; this
 				// is just less code.
+				// x = x coordinate of bar, y = y coordinate of bar, h = height of bar, v = value of element
 				this.bars[i] = {x: this.calculateX(i), y: this.startY, h: this.calculateHt(i), v: gItemArray.elements[i]};
+				
+				// store the level in a binary tree where this index's node is displayed
+				if (i >= sum) {
+					level++;
+					iPerRow = Math.pow(2,level);
+					sum += iPerRow;
+				}
+				var xGap = Math.floor(this.canvas[0].width / Math.pow(2,level));
+				this.nodeLocations[i] = {l: level, x: xGap*(i - (sum - iPerRow)) + 0.5*xGap, y: yGap*0.5 + yGap*level};
 				//this.bars[i] = new this.bar(this.calculateX(i), this.startY, this.calculateHt(i));
 			}
 		}
@@ -848,7 +855,7 @@
 			this.context[layer].beginPath();
 			this.context[layer].strokeStyle = this.lineColor;
 			this.context[layer].lineWidth = 1;
-			this.context[layer].moveTo(this.startX,this.startY+1);
+			this.context[layer].moveTo(this.startX, this.startY+1);
 			this.context[layer].lineTo(this.canvas[layer].width - this.startX, this.startY+1);
 			this.context[layer].stroke();
 			this.context[layer].closePath();
@@ -1001,7 +1008,7 @@
 			this.drawBaseline(layer);
 		}*/
 
-				/* (re)draw a bar, its label, and the baseline on which it sits */
+		/* (re)draw a bar, its label, and the baseline on which it sits */
 		this.drawItem = function(layer, i, color) {
 			this.context[layer].clearRect(this.bars[i].x, this.arrowHt + this.arrowY, this.barWd, this.startY);
 			this.drawBar(layer, this.bars[i].x, this.bars[i].y, this.bars[i].h, color);
@@ -1016,7 +1023,7 @@
 		}
 
 		this.hideBar = function(layer, idx) {
-			this.context[layer].clearRect(this.bars[idx].x-this.barWd/4, this.bars[idx].y-this.bars[idx].h-1, this.barWd*1.5, this.bars[idx].h+2);
+			this.context[layer].clearRect(this.bars[idx].x-this.barWd/4, this.bars[idx].y-this.bars[idx].h-2, this.barWd*1.5, this.bars[idx].h+4);
 		}
 
 		/* calculate the lower left X position of a bar based on its index in the array */
@@ -1027,6 +1034,16 @@
 		/* calculate the height of a bar based on its value */
 		this.calculateHt = function(i) {
 			return this.maxHeight * (gItemArray.elements[i] / gItemArray.length);
+		}
+
+		/* calculate the level in the tree at which an element's node should be displayed based on the index of the element in the array */
+		this.calculateLevel = function(idx) {
+			var level = 0, sum = 1;
+			while (idx >= sum)  {
+				level++;
+				sum += Math.pow(2,level);
+			}
+			return level;
 		}
 
 		/* draw a bar */
@@ -1055,6 +1072,90 @@
 			this.context[layer].setTransform(1,0,0,1,0,0);
 		}
 
+		/* draw a node in a tree */
+		this.drawNode = function(layer, i, textColor, fillColor, lineColor, lineWidth) {
+			var offset = this.bars[i].v.toString().length*2.5;
+			this.context[layer].beginPath();
+			this.context[layer].font = this.nodeFont;
+			this.context[layer].fillStyle = fillColor;
+			this.context[layer].strokeStyle = lineColor;
+			this.context[layer].lineWidth = lineWidth;
+			this.context[layer].arc(this.nodeLocations[i].x, this.nodeLocations[i].y, 8, 0, 360, true);
+			this.context[layer].stroke();
+			this.context[layer].fill();
+			this.context[layer].fillStyle = textColor;
+			this.context[layer].fillText(this.bars[i].v.toString(), this.nodeLocations[i].x-offset, this.nodeLocations[i].y+3);
+			this.context[layer].closePath();
+		}
+
+		/* draw all tree branches */
+		this.drawBranches = function(layer) {
+			var lastParent = Math.floor((numItems-2)/2);
+			for (i = 0; i <= lastParent; i++) {
+				var child = 2*i + 1;
+				if (child < numItems) {
+					this.drawBranch(layer, i, child, this.lineColor);
+				} else break;
+				if (child + 1 < numItems) {
+					this.drawBranch(layer, i, child + 1, this.lineColor);
+				} else break;
+			}
+		}
+
+		/* draw a single branch line */
+		this.drawBranch = function(layer, parent, child, color) {
+			this.context[layer].beginPath();
+			this.context[layer].strokeStyle = color;
+			this.context[layer].moveTo(this.nodeLocations[parent].x, this.nodeLocations[parent].y);
+			this.context[layer].lineTo(this.nodeLocations[child].x, this.nodeLocations[child].y);
+			this.context[layer].stroke();
+			this.context[layer].closePath();
+		}
+
+		/* draw all nodes in the active color */
+		this.drawNodesActive = function(layer) {
+			for (var i = 0; i < numItems; i++) {
+				this.drawNode(layer, i, this.textColor, this.activeColor, this.lineColor, 1);
+			}
+		}
+
+		/* draw the tree, one node at a time */
+		this.drawTree = function(layer, textColor, fillColor, lineColor, i, funct) {
+			if (i < numItems) {
+				this.hideItem(0, i);
+				if (i%2 === 0 && (i-2)/2 >= 0) {
+					this.markParentChild(layer, (i-2)/2, i, textColor, fillColor, lineColor);
+				} else if (i%2 !== 0 && (i-1)/2 >= 0) {
+					this.markParentChild(layer, (i-1)/2, i, textColor, fillColor, lineColor);
+				}
+				else this.drawNode(layer, i, textColor, fillColor, lineColor, 1);
+				timer = setTimeout(function() {gGraphics.drawTree(layer, textColor, fillColor, lineColor, i+1, funct);}, heapSpeed[speed]);
+			} else {
+				funct();
+			}
+		}
+
+		/* color a parent-child relationship */
+		this.markParentChild = function(layer, parent, child, textColor, fillColor, lineColor) {
+			this.drawBranch(layer, parent, child, lineColor);
+			this.drawNode(layer, parent, textColor, fillColor, lineColor, 1);
+			this.drawNode(layer, child, textColor, fillColor, lineColor, 1);	
+		}
+
+		/* Hide a node and branch to it */
+		this.hideNode = function(layer, node) {
+			if (node >= 0 && node < numItems) {
+				this.drawNode(layer, node, this.backgroundColor, this.backgroundColor, this.backgroundColor, 3);
+				if (node%2 === 0 && (node-2)/2 >= 0) {
+					this.drawBranch(layer, (node-2)/2, node, this.backgroundColor);
+					this.drawNode(layer, (node-2)/2, this.textColor, this.activeColor, this.lineColor, 1);
+				} else if (node%2 !== 0 && (node-1)/2 >= 0) {
+					this.drawBranch(layer, (node-1)/2, node, this.backgroundColor);
+					this.drawNode(layer, (node-1)/2, this.textColor, this.activeColor, this.lineColor, 1);
+				}
+			}
+		}
+
 		/* draw a black arrow pointing to a bar that is being compared and/or swapped */
 		this.markSwapBase = function(layer, i) {
 			var x = this.calculateX(i);
@@ -1072,7 +1173,7 @@
 				this.context[layer].lineWidth = 1;
 				this.context[layer].beginPath();
 				this.context[layer].moveTo(this.bars[r].x-2-this.barWd/2, this.bars[r].y);
-				this.context[layer].lineTo(this.bars[r].x-2-this.barWd/2, this.arrowY);
+				this.context[layer].lineTo(this.bars[r].x-2-this.barWd/2, this.bars[r].y-this.maxHeight);
 				this.context[layer].stroke();
 				this.context[layer].closePath();
 			}
@@ -1237,7 +1338,7 @@
 		padding: 0px;
 		margin: 0px;
 		width: 250px;
-		height: 100px;
+		height: 150px;
 		background-color: #ffff99;
 		z-index: 0;
 	}
@@ -1249,7 +1350,7 @@
 		padding: 0px;
 		margin: 0px;
 		width: 250px;
-		height: 100px;
+		height: 150px;
 		background-color: transparent;
 		z-index: 1;
 	}
@@ -1261,12 +1362,12 @@
 		padding: 0px;
 		margin: 0px;
 		width: 250px;
-		height: 100px;
+		height: 150px;
 		background-color: transparent;
 		z-index: 2;
 	}
 	div#legend {
-		margin-top: 130px;
+		margin-top: 180px;
 		left: 25px;
 		position: absolute;
 		display: block;
@@ -1311,7 +1412,7 @@
 		padding-left: 5px;
 	}
 	#speed {
-		margin-top: 170px;
+		margin-top: 220px;
 		margin-bottom: 10px;
 		left: 25px;
 		position: absolute;
@@ -1349,7 +1450,7 @@
 	.controls {
 		width: 250px;
 		position: absolute;
-		margin-top: 200px;
+		margin-top: 250px;
 		left: 25px;
 		border: none;
 	}
@@ -1373,9 +1474,11 @@
 </head>
 <body>
 	<section id="canvasLayers">
-		<canvas id="canvas">Your browser does not support HTML5 Canvas</canvas>
-		<canvas id="canvas1"></canvas>
-		<canvas id="canvas2"></canvas>
+		<!-- must include width and height attributes on canvas to define coordinate system inside the element, which is
+			not the same as the width and height css attributes that define the size of the box on screen. -->
+		<canvas id="canvas" width="300" height="200">Your browser does not support HTML5 Canvas</canvas>
+		<canvas id="canvas1" width="300" height="200"></canvas>
+		<canvas id="canvas2" width="300" height="200"></canvas>
 		<div id="legend">
 			<div id="sorted" class="box"></div><div class="text">Sorted</div>
 			<div id="currMin" class="box"></div><div class="text">Lesser/Min</div>
