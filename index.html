@@ -25,6 +25,7 @@
 	var gItemArray = new ItemArray(numItems);
 	var gGraphics = null;
 	var timer = null;
+	var timer2 = null;
 	var compareSpeed = [200,100,50];
 	var swapSpeed = [100,50,25];
 	var flashSpeed = [300,150,75];
@@ -152,6 +153,10 @@
 			if (timer !== null) {
 				clearTimeout(timer);
 				timer = null;
+			}
+			if (timer2 !== null) {
+				clearTimeout(timer2);
+				timer2 = null;
 			}
 		}
 
@@ -601,12 +606,12 @@
 				// before calling 'mergeSubSort' that indicates whether both halves of the sublist have reached their destination points.
 
 				// slide the right half of the active range up
-				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY*0.6, gGraphics.stdColor, function(){});
+				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY*0.6, gGraphics.stdColor, 1, function(){});
 				// slide the left half of the active range up
-				gGraphics.slideRangeOfBars(1, i+width, width, gGraphics.bars[i+width].x, gGraphics.bars[i+width].y, gGraphics.bars[i+width].x+2, gGraphics.startY*0.6, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
+				gGraphics.slideRangeOfBars(1, i+width, width, gGraphics.bars[i+width].x, gGraphics.bars[i+width].y, gGraphics.bars[i+width].x+2, gGraphics.startY*0.6, gGraphics.stdColor, 2, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
 			} else {
 				// slide the right half of the active range up
-				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY*0.6, gGraphics.stdColor, function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
+				gGraphics.slideRangeOfBars(1, i, width, gGraphics.bars[i].x, gGraphics.bars[i].y, gGraphics.bars[i].x-2, gGraphics.startY*0.6, gGraphics.stdColor, 1,  function(){gGraphics.markDivide(1, right); mergeSubsort(i, right, end, sorted, i, i, right);});
 			}
 			
 		} else {
@@ -935,7 +940,7 @@
 			}		
 		} */
 
-		this.slideRangeOfBars = function(layer, left, barCt, startX, startY, endX, endY, color, funct)  {
+		this.slideRangeOfBars = function(layer, left, barCt, startX, startY, endX, endY, color, whichTimer, funct)  {
 			
 			var newX = this.bars[left].x;
 			var newY = this.bars[left].y;
@@ -956,7 +961,10 @@
 				for (var k = left; k < left + barCt && k < numItems; k++) {
 					this.moveBar(layer, k, newX+(k-left)*this.barWd*2, newY, color);
 				}
-				timer = setTimeout(function() {gGraphics.slideRangeOfBars(layer, left, barCt, startX, startY, endX, endY, color, funct);}, swapSpeed[speed]);
+				if (whichTimer === 1) 
+					timer = setTimeout(function() {gGraphics.slideRangeOfBars(layer, left, barCt, startX, startY, endX, endY, color, 1, funct);}, swapSpeed[speed]);
+				else 
+					timer2 = setTimeout(function() {gGraphics.slideRangeOfBars(layer, left, barCt, startX, startY, endX, endY, color, 2, funct);}, swapSpeed[speed]);
 			} else {
 				funct();
 			}		
